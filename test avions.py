@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-couleurs = ['red', 'green', 'blue', 'orange', 'magenta', 'cyan', 'black']
+couleurs = ['red', 'green', 'blue', 'orange', 'magenta', 'cyan', 'grey']
 
 class Color(QWidget):
     def __init__(self, color):
@@ -33,6 +33,18 @@ class MainWindow(QMainWindow):
         for i in range(100):
             layout.setRowMinimumHeight(i,100)
             layout.setColumnMinimumWidth(i,100)
+        layout.setVerticalSpacing(0)
+        layout.setHorizontalSpacing(0)
+
+        for i in range(100):
+            layout.addWidget(Color('black'), 46, i)
+            layout.addWidget(Color('black'), 47, i)
+            layout.addWidget(Color('black'), 48, i)
+            layout.addWidget(Color('white'), 49, i)
+            layout.addWidget(Color('white'), 50, i)
+            layout.addWidget(Color('black'), 51, i)
+            layout.addWidget(Color('black'), 52, i)
+            layout.addWidget(Color('black'), 53, i)
 
         for i in range(7):
             coo = (random.randint(0,99), random.randint(0,99))
