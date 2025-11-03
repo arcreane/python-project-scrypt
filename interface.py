@@ -1,38 +1,54 @@
 import sys
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QLabel
 
 class MainWindow(QWidget):
-   def __init__(self):
-       super().__init__()
-       self.setWindowTitle("QPushButton Example")
-       #taille fenetre
-       self.setFixedSize(QSize(1500, 800))
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("QPushButton Example")
+        self.setFixedSize(QSize(1500, 800))
 
-       # creation QPushButton :
-       button = QPushButton("Commencer la partie", self)
-       button.clicked.connect(self.on_button_click) # Connect signal to slot
+        #Image de fond
+        self.background = QLabel(self)
+        self.background.setGeometry(0, 0, 1500, 800)
+        pixmap = QPixmap(r"C:\Users\Chloé\OneDrive - IPSA\Bureau\IPSA cours\Aero_2\Grand Projet\Scrypt\ecran_fond_interface.png")
+        if not pixmap.isNull():
+            pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatioByExpanding)
+            self.background.setPixmap(pixmap)
+        else:
+            print("⚠️ Image non trouvée : vérifie le chemin")
+        self.background.setScaledContents(True)
 
-       #forme :
-       font = button.font()
-       font.setPointSize(30)
-       button.setFont(font)
+        #Bouton
+        self.button = QPushButton("Commencer la partie", self)
+        self.button.clicked.connect(self.on_button_click)
+        self.button.setFixedSize(400, 90)
 
-       #alignement :
-       align_top_left = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+        font = self.button.font()
+        font.setPointSize(30)
+        self.button.setFont(font)
 
+        #Layout
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.button, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(layout)
+        self.background.lower()
 
+    def resizeEvent(self, event):
+        if hasattr(self, 'background'):
+            self.background.setGeometry(0, 0, self.width(), self.height())
+            pixmap = QPixmap("Scrypt/ecran_fond_interface.png")
+            if not pixmap.isNull():
+                pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatioByExpanding)
+                self.background.setPixmap(pixmap)
+        return super().resizeEvent(event)
 
-       #layout
-       layout = QVBoxLayout()
-       layout.addWidget(button)
-       self.setLayout(layout)
-
-   def on_button_click(self):
-       print("Bonne chance !")
+    def on_button_click(self):
+        print("Bonne chance !")
 
 if __name__ == "__main__":
-   app = QApplication([])
-   window = MainWindow()
-   window.show()
-   app.exec()
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
