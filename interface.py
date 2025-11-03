@@ -12,7 +12,7 @@ class MainWindow(QWidget):
         #Image de fond
         self.background = QLabel(self)
         self.background.setGeometry(0, 0, 1500, 800)
-        pixmap = QPixmap(r"C:\Users\Chloé\OneDrive - IPSA\Bureau\IPSA cours\Aero_2\Grand Projet\Scrypt\ecran_fond_interface.png")
+        pixmap = QPixmap(r"ecran_fond_interface.png")
         if not pixmap.isNull():
             pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatioByExpanding)
             self.background.setPixmap(pixmap)
