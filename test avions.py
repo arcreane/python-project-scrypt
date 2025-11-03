@@ -11,6 +11,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+couleurs = ['red', 'green', 'blue', 'orange', 'magenta', 'cyan', 'black']
+
 class Color(QWidget):
     def __init__(self, color):
         super().__init__()
@@ -32,12 +34,11 @@ class MainWindow(QMainWindow):
             layout.setRowMinimumHeight(i,100)
             layout.setColumnMinimumWidth(i,100)
 
-        layout.addWidget(Color('red'), random.randint(0,100), random.randint(0,100))
-        layout.addWidget(Color('blue'), random.randint(0,100), random.randint(0,100))
-        layout.addWidget(Color('green'), random.randint(0, 100), random.randint(0, 100))
-        layout.addWidget(Color('orange'), random.randint(0, 100), random.randint(0, 100))
-        layout.addWidget(Color('pink'), 0, 0)
-        layout.addWidget(Color('grey'), 0, 0)
+        for i in range(7):
+            coo = (random.randint(0,99), random.randint(0,99))
+            while layout.itemAtPosition(coo[0], coo[1]) != None:
+                coo = (random.randint(0, 99), random.randint(0, 99))
+            layout.addWidget(Color(couleurs[i]), coo[0], coo[1])
 
         widget = QWidget()
         widget.setLayout(layout)
