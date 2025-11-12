@@ -21,9 +21,9 @@ class menu0(QWidget):
         bouton3.setIcon(QIcon("image3.png"))
 
         for bouton in (bouton1, bouton2, bouton3):
-            bouton.setFixedSize(60, 60)  # taille du bouton
-            bouton.setIconSize(QSize(40, 40))  # taille de l'image
-            bouton.setStyleSheet("border: none;")
+            bouton.setFixedSize(45, 20)  # taille du bouton
+            bouton.setIconSize(QSize(50, 50))  # taille de l'image
+
 
         # Layout horizontal pour aligner les boutons
         h_layout = QHBoxLayout()
@@ -32,12 +32,13 @@ class menu0(QWidget):
         h_layout.addWidget(bouton3)
         h_layout.setSpacing(8)
 
-        #layout principal pour placer le tout en bas à droite
+        #layout principal pour placer le tout en haut à droite
         main_layout = QVBoxLayout(self)
-        main_layout.addStretch()
         main_layout.addLayout(h_layout)
+        main_layout.addStretch()  # pousse le contenu restant vers le bas (ici après les boutons)
         main_layout.setAlignment(h_layout, Qt.AlignmentFlag.AlignRight)
         self.setLayout(main_layout)
+
 
 # Lancement de l’application
 if __name__ == "__main__":
