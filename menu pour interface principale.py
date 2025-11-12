@@ -17,8 +17,8 @@ class menu0(QWidget):
 
         # ajout images
         bouton1.setIcon(QIcon("image1.png"))
-        bouton2.setIcon(QIcon("image2.png"))
-        bouton3.setIcon(QIcon("image3.png"))
+        bouton2.setIcon(QIcon("image2.jpg"))
+        bouton3.setIcon(QIcon("image3.jpg"))
 
         for bouton in (bouton1, bouton2, bouton3):
             bouton.setFixedSize(45, 20)  # taille du bouton
