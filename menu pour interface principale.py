@@ -42,6 +42,6 @@ class menu0(QWidget):
 # Lancement de l’application
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = main()
+    window = menu0()
     window.show()
     sys.exit(app.exec())
