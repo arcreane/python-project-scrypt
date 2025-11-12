@@ -17,5 +17,4 @@ class Avions:
     def droite(self):
         self.cap += 45
     def __del__(self):
-        self.accepted = True
         Avions.nb_avions -= 1
