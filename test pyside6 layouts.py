@@ -1,4 +1,5 @@
 import sys
+import Avions
 
 from PySide6.QtCore import QSize
 from PySide6.QtWidgets import (
@@ -15,13 +16,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("My App")
-        self.setFixedSize(QSize(800, 600))
-
-        layout1 = QHBoxLayout()
-        layout2 = QVBoxLayout()
-        layout3 = QVBoxLayout()
-        layout4 = QVBoxLayout()
+        self.setWindowTitle("SkyLink")
+        self.setFixedSize(QSize(1500, 800))
 
         label = QLabel("Stats")
         label.setFrameShape(QFrame.Panel)
@@ -40,22 +36,42 @@ class MainWindow(QMainWindow):
         label8 = (QLabel("Actions"))
         label8.setFrameShape(QFrame.Panel)
 
-        layout2.addWidget(label)
-        layout2.addWidget(label2)
-        layout3.addWidget(label3)
-        layout3.addWidget(label4)
-        layout3.addWidget(label5)
-        layout4.addWidget(label6)
-        layout4.addWidget(label7)
-        layout4.addWidget(label8)
+        av_nom = QLabel(avion.nom)
+        av_alt = QLabel(str(avion.altitude))
+        av_vit = QLabel(str(avion.vitesse))
+        av_fuel = QLabel(str(avion.fuel))
+        av_cap = QLabel(str(avion.cap))
 
-        layout1.addLayout(layout2)
-        layout1.addLayout(layout3)
-        layout1.addLayout(layout4)
+        layout = QHBoxLayout()
+        layout_droite = QVBoxLayout()
+        layout_centre = QVBoxLayout()
+        layout_gauche = QVBoxLayout()
+        layout_avions = QVBoxLayout()
+
+        layout_droite.addWidget(label)
+        layout_droite.addLayout(layout_avions)
+        layout_avions.addWidget(label2)
+        layout_avions.addWidget(av_nom)
+        layout_avions.addWidget(av_alt)
+        layout_avions.addWidget(av_vit)
+        layout_avions.addWidget(av_fuel)
+        layout_avions.addWidget(av_cap)
+        layout_centre.addWidget(label3)
+        layout_centre.addWidget(label4)
+        layout_centre.addWidget(label5)
+        layout_gauche.addWidget(label6)
+        layout_gauche.addWidget(label7)
+        layout_gauche.addWidget(label8)
+
+        layout.addLayout(layout_droite)
+        layout.addLayout(layout_centre)
+        layout.addLayout(layout_gauche)
 
         widget = QWidget()
-        widget.setLayout(layout1)
+        widget.setLayout(layout)
         self.setCentralWidget(widget)
+
+avion=Avions.Avions("ABC123",3500,400,50,90)
 
 app = QApplication(sys.argv)
 
