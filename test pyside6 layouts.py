@@ -16,8 +16,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("My App")
-        self.setFixedSize(QSize(800, 600))
+        self.setWindowTitle("SkyLink")
+        self.setFixedSize(QSize(1000, 700))
 
         label = QLabel("Stats")
         label.setFrameShape(QFrame.Panel)
