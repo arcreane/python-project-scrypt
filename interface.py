@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, Q
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("SkyLink")
+        self.setWindowTitle("SkyLink   ")
         self.setFixedSize(QSize(1500, 800))
 
         #Image de fond
