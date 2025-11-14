@@ -4,6 +4,8 @@ from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QFrame
 )
 from PySide6.QtCore import Qt
+from liste_avions_hélicos_test import ListeAvionsHelis
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -11,7 +13,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
 
-        # ----- Création des labels -----
+        #Création des labels
         label_stats = QLabel("Stats")
         label_stats.setFrameShape(QFrame.Panel)
 
@@ -36,15 +38,34 @@ class MainWindow(QMainWindow):
         label_actions = QLabel("Actions")
         label_actions.setFrameShape(QFrame.Panel)
 
-        # Infos de l'avion
-        avion = Avions.Avions("ABC123", 3500, 400, 50, 90)
-        av_nom = QLabel(avion.nom)
-        av_alt = QLabel(str(avion.altitude))
-        av_vit = QLabel(str(avion.vitesse))
-        av_fuel = QLabel(str(avion.fuel))
-        av_cap = QLabel(str(avion.cap))
+        # Infos de l'avion test
+        avions_data = [
+            {"nom": "ABC123", "alt": 3500, "vit": 400, "fuel": 50},
+            {"nom": "DEF456", "alt": 3600, "vit": 420, "fuel": 60},
+            {"nom": "GHI789", "alt": 3700, "vit": 430, "fuel": 70},
+            {"nom": "JKL101", "alt": 3800, "vit": 440, "fuel": 80},
+            {"nom": "MNO112", "alt": 3900, "vit": 450, "fuel": 90},
+            {"nom": "ABC123", "alt": 3500, "vit": 400, "fuel": 50},
+            {"nom": "DEF456", "alt": 3600, "vit": 420, "fuel": 60},
+            {"nom": "GHI789", "alt": 3700, "vit": 430, "fuel": 70},
+            {"nom": "JKL101", "alt": 3800, "vit": 440, "fuel": 80},
+            {"nom": "MNO112", "alt": 3900, "vit": 450, "fuel": 90},
+            {"nom": "ABC123", "alt": 3500, "vit": 400, "fuel": 50},
+            {"nom": "DEF456", "alt": 3600, "vit": 420, "fuel": 60},
+            {"nom": "GHI789", "alt": 3700, "vit": 430, "fuel": 70},
+            {"nom": "JKL101", "alt": 3800, "vit": 440, "fuel": 80},
+            {"nom": "MNO112", "alt": 3900, "vit": 450, "fuel": 90},
+        ]
+        helis_data = [
+            {"nom": "H001", "alt": 1200, "vit": 200, "fuel": 50},
+            {"nom": "H002", "alt": 1250, "vit": 210, "fuel": 55},
+            {"nom": "H003", "alt": 1300, "vit": 220, "fuel": 60},
+        ]
 
-        # ----- Layouts colonnes -----
+        # Widget ListeAvionsHelis
+        widget_avions_helicos = ListeAvionsHelis(avions=avions_data, helis=helis_data)
+
+        #Layouts colonnes
         layout_gauche = QVBoxLayout()
         layout_gauche.addWidget(label_controles)
         layout_gauche.addWidget(label_instr)
@@ -55,24 +76,15 @@ class MainWindow(QMainWindow):
         layout_centre.addWidget(label_message,1)
         layout_centre.addWidget(label_piste,5)
 
-
-        layout_avions = QVBoxLayout()
-        layout_avions.addWidget(label_avions)
-        layout_avions.addWidget(av_nom)
-        layout_avions.addWidget(av_alt)
-        layout_avions.addWidget(av_vit)
-        layout_avions.addWidget(av_fuel)
-        layout_avions.addWidget(av_cap)
-
         layout_droite = QVBoxLayout()
         layout_droite.addWidget(label_stats)
-        layout_droite.addLayout(layout_avions)
+        layout_droite.addWidget(widget_avions_helicos,0,Qt.AlignTop)
 
-        #Layout horizontal principal (zone de jeu)
+        #Layout horizontal principal
         layout_zone_jeu = QHBoxLayout()
-        layout_zone_jeu.addLayout(layout_droite, 1)   # colonne gauche plus petite
-        layout_zone_jeu.addLayout(layout_centre, 2)   # colonne centrale plus grande
-        layout_zone_jeu.addLayout(layout_gauche, 1)   # colonne droite plus petite
+        layout_zone_jeu.addLayout(layout_droite, 1)
+        layout_zone_jeu.addLayout(layout_centre, 2)
+        layout_zone_jeu.addLayout(layout_gauche, 1)
 
         #Barre du haut
         barre_haut = QWidget()
