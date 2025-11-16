@@ -9,7 +9,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QWidget,
-    QFrame
+    QFrame,
+    QPushButton
 )
 
 class MainWindow(QMainWindow):
@@ -36,6 +37,10 @@ class MainWindow(QMainWindow):
         label8 = (QLabel("Actions"))
         label8.setFrameShape(QFrame.Panel)
 
+        # Boutons
+        btn_monter = QPushButton("Monter")
+        btn_descendre = QPushButton("Descendre")
+
         av_nom = QLabel(avion.nom)
         av_alt = QLabel(str(avion.altitude))
         av_vit = QLabel(str(avion.vitesse))
@@ -47,6 +52,11 @@ class MainWindow(QMainWindow):
         layout_centre = QVBoxLayout()
         layout_gauche = QVBoxLayout()
         layout_avions = QVBoxLayout()
+        btn_monter.setFixedHeight(60)
+        btn_descendre.setFixedHeight(60)
+        layout_boutons = QHBoxLayout()
+        layout_boutons.addWidget(btn_monter)
+        layout_boutons.addWidget(btn_descendre)
 
         layout_droite.addWidget(label)
         layout_droite.addLayout(layout_avions)
@@ -60,7 +70,8 @@ class MainWindow(QMainWindow):
         layout_centre.addWidget(label4)
         layout_centre.addWidget(label5)
         layout_gauche.addWidget(label6)
-        layout_gauche.addWidget(label7)
+
+        layout_gauche.addLayout(layout_boutons)
         layout_gauche.addWidget(label8)
 
         layout.addLayout(layout_droite)
