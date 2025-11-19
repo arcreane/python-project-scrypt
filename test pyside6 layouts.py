@@ -10,7 +10,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QWidget,
     QFrame,
-    QPushButton
+    QPushButton,
+    QGroupBox
 )
 
 class MainWindow(QMainWindow):
@@ -40,6 +41,34 @@ class MainWindow(QMainWindow):
         # Boutons
         btn_monter = QPushButton("Monter")
         btn_descendre = QPushButton("Descendre")
+        btn_gauche = QPushButton("Gauche")
+        btn_droite = QPushButton("Droite")
+
+        # Même taille que les autres
+        btn_gauche.setFixedHeight(60)
+        btn_droite.setFixedHeight(60)
+
+        # GROUPBOX instructions/action
+
+        group_instructions = QGroupBox("Instructions")
+        layout_instructions = QVBoxLayout()
+        layout_instructions.addWidget(btn_monter)
+        layout_instructions.addWidget(btn_descendre)
+        group_instructions.setLayout(layout_instructions)
+        group_actions = QGroupBox("Actions")
+        layout_actions = QVBoxLayout()
+        layout_actions.addWidget(btn_gauche)
+        layout_actions.addWidget(btn_droite)
+        group_actions.setLayout(layout_actions)
+        group_controles = QGroupBox("Contrôles")
+        layout_controles = QVBoxLayout()
+        group_controles.setLayout(layout_controles)
+
+        layout_gauche = QVBoxLayout()
+        layout_gauche.addWidget(group_controles)
+        layout_gauche.addWidget(group_instructions)
+        layout_gauche.addWidget(group_actions)
+
 
         av_nom = QLabel(avion.nom)
         av_alt = QLabel(str(avion.altitude))
@@ -50,13 +79,10 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout()
         layout_droite = QVBoxLayout()
         layout_centre = QVBoxLayout()
-        layout_gauche = QVBoxLayout()
         layout_avions = QVBoxLayout()
         btn_monter.setFixedHeight(60)
         btn_descendre.setFixedHeight(60)
-        layout_boutons = QHBoxLayout()
-        layout_boutons.addWidget(btn_monter)
-        layout_boutons.addWidget(btn_descendre)
+
 
         layout_droite.addWidget(label)
         layout_droite.addLayout(layout_avions)
@@ -69,10 +95,7 @@ class MainWindow(QMainWindow):
         layout_centre.addWidget(label3)
         layout_centre.addWidget(label4)
         layout_centre.addWidget(label5)
-        layout_gauche.addWidget(label6)
-
-        layout_gauche.addLayout(layout_boutons)
-        layout_gauche.addWidget(label8)
+        layout_gauche.addWidget(group_actions)
 
         layout.addLayout(layout_droite)
         layout.addLayout(layout_centre)
