@@ -1,115 +1,131 @@
 import sys
 import Avions
-
-from PySide6.QtCore import QSize
 from PySide6.QtWidgets import (
-    QApplication,
-    QLabel,
-    QMainWindow,
-    QVBoxLayout,
-    QHBoxLayout,
-    QWidget,
-    QFrame,
-    QPushButton,
-    QGroupBox
+    QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
+    QPushButton, QFrame, QGroupBox
 )
+from PySide6.QtCore import Qt
+from liste_avions_hélicos_test import ListeAvionsHelis
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("SkyLink")
-        self.setFixedSize(QSize(1500, 800))
+        self.showFullScreen()
 
-        label = QLabel("Stats")
-        label.setFrameShape(QFrame.Panel)
-        label2 = (QLabel("Avions"))
-        label2.setFrameShape(QFrame.Panel)
-        label3 = (QLabel("Vue de haut"))
-        label3.setFrameShape(QFrame.Panel)
-        label4 = (QLabel("Message"))
-        label4.setFrameShape(QFrame.Panel)
-        label5 = (QLabel("Piste de côté"))
-        label5.setFrameShape(QFrame.Panel)
-        label6 = (QLabel("Contrôles"))
-        label6.setFrameShape(QFrame.Panel)
-        label7 = (QLabel("Instructions"))
-        label7.setFrameShape(QFrame.Panel)
-        label8 = (QLabel("Actions"))
-        label8.setFrameShape(QFrame.Panel)
+
+        # Labels
+        label_stats = QLabel("Stats"); label_stats.setFrameShape(QFrame.Panel)
+        label_vue = QLabel("Vue de haut"); label_vue.setFrameShape(QFrame.Panel)
+        label_message = QLabel("Message"); label_message.setFrameShape(QFrame.Panel)
+        label_piste = QLabel("Piste de côté"); label_piste.setFrameShape(QFrame.Panel)
+        label_controles = QLabel("Contrôles"); label_controles.setFrameShape(QFrame.Panel)
+        label_instr = QLabel("Instructions"); label_instr.setFrameShape(QFrame.Panel)
+        label_actions = QLabel("Actions"); label_actions.setFrameShape(QFrame.Panel)
+
 
         # Boutons
         btn_monter = QPushButton("Monter")
         btn_descendre = QPushButton("Descendre")
         btn_gauche = QPushButton("Gauche")
         btn_droite = QPushButton("Droite")
+        btn_atterrir = QPushButton("Atterrir")
 
-        # Même taille que les autres
-        btn_gauche.setFixedHeight(60)
-        btn_droite.setFixedHeight(60)
+        # Même taille pour cohérence
+        for b in [btn_monter, btn_descendre, btn_gauche, btn_droite, btn_atterrir]:
+            b.setFixedHeight(60)
 
         # GROUPBOX instructions/action
-
         group_instructions = QGroupBox("Instructions")
         layout_instructions = QVBoxLayout()
         layout_instructions.addWidget(btn_monter)
         layout_instructions.addWidget(btn_descendre)
         group_instructions.setLayout(layout_instructions)
+
         group_actions = QGroupBox("Actions")
         layout_actions = QVBoxLayout()
         layout_actions.addWidget(btn_gauche)
         layout_actions.addWidget(btn_droite)
         group_actions.setLayout(layout_actions)
+
         group_controles = QGroupBox("Contrôles")
         layout_controles = QVBoxLayout()
         group_controles.setLayout(layout_controles)
 
+
+        # Données avions/hélicos
+        avions_data = [
+            {"nom": "JKL101", "alt": 3800, "vit": 440, "fuel": 80},
+            {"nom": "MNO112", "alt": 3900, "vit": 450, "fuel": 90},
+        ]
+        helis_data = [
+            {"nom": "H001", "alt": 1200, "vit": 200, "fuel": 50},
+            {"nom": "H002", "alt": 1250, "vit": 210, "fuel": 55},
+            {"nom": "H003", "alt": 1300, "vit": 220, "fuel": 60},
+        ]
+        widget_avions_helicos = ListeAvionsHelis(avions=avions_data, helis=helis_data)
+
+
+        # Layouts colonnes
         layout_gauche = QVBoxLayout()
         layout_gauche.addWidget(group_controles)
         layout_gauche.addWidget(group_instructions)
         layout_gauche.addWidget(group_actions)
 
-
-        av_nom = QLabel(avion.nom)
-        av_alt = QLabel(str(avion.altitude))
-        av_vit = QLabel(str(avion.vitesse))
-        av_fuel = QLabel(str(avion.fuel))
-        av_cap = QLabel(str(avion.cap))
-
-        layout = QHBoxLayout()
-        layout_droite = QVBoxLayout()
         layout_centre = QVBoxLayout()
-        layout_avions = QVBoxLayout()
-        btn_monter.setFixedHeight(60)
-        btn_descendre.setFixedHeight(60)
+        layout_centre.addWidget(label_vue, 5)
+        layout_centre.addWidget(label_message, 1)
+        layout_centre.addWidget(label_piste, 5)
+
+        layout_droite = QVBoxLayout()
+        layout_droite.addWidget(label_stats)
+        layout_droite.addWidget(widget_avions_helicos, 0, Qt.AlignTop)
 
 
-        layout_droite.addWidget(label)
-        layout_droite.addLayout(layout_avions)
-        layout_avions.addWidget(label2)
-        layout_avions.addWidget(av_nom)
-        layout_avions.addWidget(av_alt)
-        layout_avions.addWidget(av_vit)
-        layout_avions.addWidget(av_fuel)
-        layout_avions.addWidget(av_cap)
-        layout_centre.addWidget(label3)
-        layout_centre.addWidget(label4)
-        layout_centre.addWidget(label5)
-        layout_gauche.addWidget(group_actions)
+        # Layout horizontal principal
+        layout_zone_jeu = QHBoxLayout()
+        layout_zone_jeu.addLayout(layout_droite, 1)
+        layout_zone_jeu.addLayout(layout_centre, 2)
+        layout_zone_jeu.addLayout(layout_gauche, 1)
 
-        layout.addLayout(layout_droite)
-        layout.addLayout(layout_centre)
-        layout.addLayout(layout_gauche)
 
-        widget = QWidget()
-        widget.setLayout(layout)
-        self.setCentralWidget(widget)
+        # Barre du haut
+        barre_haut = QWidget()
+        barre_haut.setMaximumHeight(40)
+        barre_haut.setStyleSheet("background-color: #5D4482;")
+        layout_barre = QHBoxLayout(barre_haut)
+        layout_barre.setContentsMargins(5, 5, 5, 5)
+        layout_barre.setSpacing(5)
 
-avion=Avions.Avions("ABC123",3500,400,50,90)
+        message_label = QLabel("L'équipe Scrypt vous souhaite une bonne partie !")
+        message_label.setAlignment(Qt.AlignCenter)
+        font = message_label.font(); font.setPointSize(18); font.setBold(True)
+        message_label.setFont(font)
+        message_label.setStyleSheet("color: white;")
+        layout_barre.addWidget(message_label)
+        layout_barre.addStretch(1)
 
+        btn_pause = QPushButton("Pause")
+        btn_recommencer = QPushButton("Recommencer")
+        btn_quitter = QPushButton("Quitter")
+        layout_barre.addWidget(btn_pause)
+        layout_barre.addWidget(btn_recommencer)
+        layout_barre.addWidget(btn_quitter)
+
+
+        # Layout global
+        layout_global = QVBoxLayout()
+        layout_global.addWidget(barre_haut)
+        layout_global.addLayout(layout_zone_jeu)
+
+        central_widget = QWidget()
+        central_widget.setLayout(layout_global)
+        self.setCentralWidget(central_widget)
+
+
+# Exécution
 app = QApplication(sys.argv)
-
 window = MainWindow()
 window.show()
-
 app.exec()
