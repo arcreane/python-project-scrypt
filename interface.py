@@ -5,9 +5,10 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QLabel
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtWidgets import QMessageBox, QHBoxLayout
+from interface_principale import MainGameWindow
 
 
-class MainWindow(QWidget):
+class Window(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SkyLink")
@@ -92,7 +93,9 @@ class MainWindow(QWidget):
     def on_button_click(self):
         print("Bonne chance !")
         self.player.stop()
-
+        self.main_window = MainGameWindow()
+        self.main_window.show()
+        self.close()
 
     def show_infos(self):
         msg = QMessageBox(self)
@@ -105,6 +108,6 @@ class MainWindow(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = Window()
     window.showFullScreen()
     sys.exit(app.exec())
