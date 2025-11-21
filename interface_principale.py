@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from liste_avions_hélicos_test import ListeAvionsHelis
 
-class MainWindow(QMainWindow):
+class MainGameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -125,7 +125,8 @@ class MainWindow(QMainWindow):
 
 
 # Exécution
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-app.exec()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainGameWindow()
+    window.show()
+    sys.exit(app.exec())
