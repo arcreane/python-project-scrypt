@@ -1,5 +1,6 @@
 import sys
 import Avions
+import Carte
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
     QPushButton, QFrame, QGroupBox
@@ -16,7 +17,7 @@ class MainGameWindow(QMainWindow):
 
         # Labels
         label_stats = QLabel("Stats"); label_stats.setFrameShape(QFrame.Panel)
-        label_vue = QLabel("Vue de haut"); label_vue.setFrameShape(QFrame.Panel)
+        label_carte = Carte.GameWidget()
         label_message = QLabel("Message"); label_message.setFrameShape(QFrame.Panel)
         label_piste = QLabel("Piste de côté"); label_piste.setFrameShape(QFrame.Panel)
 
@@ -78,7 +79,7 @@ class MainGameWindow(QMainWindow):
         layout_gauche.addWidget(group_instructions)  # en bas
 
         layout_centre = QVBoxLayout()
-        layout_centre.addWidget(label_vue, 5)
+        layout_centre.addWidget(label_carte, 5)
         layout_centre.addWidget(label_message, 1)
         layout_centre.addWidget(label_piste, 5)
 
