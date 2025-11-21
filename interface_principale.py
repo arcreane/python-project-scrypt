@@ -1,4 +1,3 @@
-# Main.py
 import sys
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
@@ -13,8 +12,10 @@ from message_defilant import MarqueeLabel
 class MainGameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
+        self.menu_window = None
 
         # ---------- Bande du haut ----------
         barre_haut = QWidget()
@@ -145,6 +146,78 @@ class MainGameWindow(QMainWindow):
         layout_zone_jeu.addLayout(layout_centre, 2)
         layout_zone_jeu.addLayout(layout_gauche, 1)
 
+        # Barre du haut
+        barre_haut = QWidget()
+        barre_haut.setMaximumHeight(40)
+        barre_haut.setStyleSheet("background-color: #5D4482;")
+        layout_barre = QHBoxLayout(barre_haut)
+        layout_barre.setContentsMargins(5, 5, 5, 5)
+        layout_barre.setSpacing(5)
+
+        message_label = QLabel("L'équipe Scrypt vous souhaite une bonne partie !")
+        message_label.setAlignment(Qt.AlignCenter)
+        font = message_label.font(); font.setPointSize(18); font.setBold(True)
+        message_label.setFont(font)
+        message_label.setStyleSheet("color: white;")
+        layout_barre.addWidget(message_label)
+        layout_barre.addStretch(1)
+
+        btn_pause = QPushButton("Pause")
+        btn_recommencer = QPushButton("Recommencer")
+        btn_quitter = QPushButton("Quitter")
+        btn_quitter.clicked.connect(self.retour_menu)
+        layout_barre.addWidget(btn_pause)
+        layout_barre.addWidget(btn_recommencer)
+        layout_barre.addWidget(btn_quitter)
+
+        # Bouton Pause
+        btn_pause.setStyleSheet("""
+             QPushButton {
+                 background-color: rgba(80, 150, 255, 140); 
+                 color: white;
+                 border-radius: 10px;
+                 padding: 8px 16px;
+                 font-size: 16px;               /* taille uniforme */
+                 font-family: 'Comic Sans MS';  /* police uniforme */
+                 font-weight: bold;
+             }
+             QPushButton:hover {
+                 background-color: #C5A6F0;
+             }
+         """)
+
+        # Bouton Recommencer
+        btn_recommencer.setStyleSheet("""
+             QPushButton {
+                 background-color: #5BC074;
+                 color: white;
+                 border-radius: 10px;
+                 padding: 8px 16px;
+                 font-size: 16px;
+                 font-family: 'Comic Sans MS';
+                 font-weight: bold;
+             }
+             QPushButton:hover {
+                 background-color: #79D890;
+             }
+         """)
+
+        # Bouton Quitter
+        btn_quitter.setStyleSheet("""
+             QPushButton {
+                 background-color: #E85757;
+                 color: white;
+                 border-radius: 10px;
+                 padding: 8px 16px;
+                 font-size: 16px;
+                 font-family: 'Comic Sans MS';
+                 font-weight: bold;
+             }
+             QPushButton:hover {
+                 background-color: #FF6F6F;
+             }
+         """)
+
         # Layout global
         layout_global = QVBoxLayout()
         layout_global.addWidget(barre_haut)
@@ -153,6 +226,12 @@ class MainGameWindow(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(layout_global)
         self.setCentralWidget(central_widget)
+
+        def retour_menu(self):
+            from interface import Window
+            self.menu_window = Window()
+            self.menu_window.showFullScreen()
+            self.close()
 
         # Mettre à jour la liste des avions toutes les secondes
         self.update_plane_list()
