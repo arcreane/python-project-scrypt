@@ -7,7 +7,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from liste_avions_hélicos_test import ListeAvionsHelis
 from message_defilant import MarqueeLabel
-
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtCore import QUrl
 
 class MainGameWindow(QMainWindow):
     def __init__(self):
@@ -37,6 +38,15 @@ class MainGameWindow(QMainWindow):
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout_carte.addWidget(self.widget_carte)
         carte.setLayout(layout_carte)
+
+        # Musique d'ambiance
+        self.player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.player.setAudioOutput(self.audio_output)
+        self.player.setSource(QUrl.fromLocalFile("musique_de_fond_interface_principale.mp3"))
+        self.player.setLoops(QMediaPlayer.Infinite)  # boucle infinie
+        self.player.play()
+
 
         # Boutons
         btn_monter = QPushButton("Monter")
@@ -198,10 +208,13 @@ class MainGameWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def retour_menu(self):
+        if self.player:
+            self.player.stop()   # arrêter la musique
         from interface import Window
         self.menu_window = Window()
         self.menu_window.showFullScreen()
         self.close()
+
 
 # Exécution
 if __name__ == "__main__":
