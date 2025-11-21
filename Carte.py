@@ -54,6 +54,7 @@ class MovingPlane:
             self.vx = 0
             self.vy = 0
             self.avion.altitude = 0
+            self.avion.vitesse = 0
             self.update_avion_cap()
 
         self.blink += 1
