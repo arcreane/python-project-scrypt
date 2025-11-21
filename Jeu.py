@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from Carte import GameWidget
 from message_defilant import MarqueeLabel
+from meteo import MeteoManager
 
 
 class MainGameWindow(QMainWindow):
@@ -111,6 +112,7 @@ class MainGameWindow(QMainWindow):
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout_carte.addWidget(self.widget_carte)
         carte_box.setLayout(layout_carte)
+        self.meteo_manager = MeteoManager(self.widget_carte)
 
         # ---------- Liste des avions ----------
         self.liste_avions = QListWidget()
