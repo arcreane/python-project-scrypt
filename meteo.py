@@ -15,13 +15,20 @@ class MeteoManager:
             "foudre": "images/foudre.png"
         }
 
+        # Tailles spécifiques pour chaque icône
+        self.tailles = {
+            "typhon": (100, 100),
+            "givre": (80, 80),
+            "foudre": (80, 120)
+        }
+
         # Timer pour lancer les événements aléatoires
         self.timer = QTimer()
         self.timer.timeout.connect(self.lancer_evenement)
         self.demarrer_timer_aleatoire()
 
     def demarrer_timer_aleatoire(self):
-        # Prochain événement entre 10 et 30 secondes
+        # Prochain événement entre 5 et 10 secondes
         interval = random.randint(5_000, 10_000)
         self.timer.start(interval)
 
@@ -33,7 +40,8 @@ class MeteoManager:
         # Créer un QLabel pour afficher l'icône
         label = QLabel(self.parent_widget)
         pixmap = QPixmap(image_path)
-        pixmap = pixmap.scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # petite taille
+        width, height = self.tailles[evenement]
+        pixmap = pixmap.scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         label.setPixmap(pixmap)
 
         # Position aléatoire dans le widget_carte
