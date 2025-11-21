@@ -18,7 +18,7 @@ class MainGameWindow(QMainWindow):
         self.showFullScreen()
         self.menu_window = None
 
-        # ---------- Bande du haut ----------
+        # Bande du haut
         barre_haut = QWidget()
         barre_haut.setMaximumHeight(40)
         barre_haut.setStyleSheet("background-color: #5D4482;")
@@ -43,7 +43,7 @@ class MainGameWindow(QMainWindow):
         layout_barre.addWidget(btn_recommencer)
         layout_barre.addWidget(btn_quitter)
 
-        # ---------- Zone centrale ----------
+        # Zone centrale
         self.label_stats = QLabel("Stats")
         self.label_stats.setFrameShape(QLabel.Panel)
         self.label_stats.setAlignment(Qt.AlignCenter)
@@ -65,7 +65,7 @@ class MainGameWindow(QMainWindow):
         layout_carte.addWidget(self.widget_carte)
         carte_box.setLayout(layout_carte)
 
-        # ---------- Liste des avions ----------
+        # Liste des avions
         self.liste_avions = QListWidget()
         self.liste_avions.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.liste_avions.setAlternatingRowColors(True)
@@ -90,16 +90,17 @@ class MainGameWindow(QMainWindow):
         # Musique d'ambiance
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
+        self.audio_output.setVolume(0.5)
         self.player.setAudioOutput(self.audio_output)
         self.player.setSource(QUrl.fromLocalFile("musique_de_fond_interface_principale.mp3"))
-        self.player.setLoops(QMediaPlayer.Infinite)  # boucle infinie
+        self.player.setLoops(QMediaPlayer.Infinite)
         self.player.play()
 
         # Connecter sélection dans la liste à la carte
         self.liste_avions.currentItemChanged.connect(self.on_liste_avion_selected)
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
 
-        # ---------- Boutons de contrôle ----------
+        # Boutons de contrôle
         btn_monter = QPushButton("Monter")
         btn_descendre = QPushButton("Descendre")
         btn_gauche = QPushButton("Gauche")
@@ -136,7 +137,7 @@ class MainGameWindow(QMainWindow):
         layout_instructions.addWidget(btn_droite)
         group_instructions.setLayout(layout_instructions)
 
-        # ---------- Layouts principaux ----------
+        # Layouts principaux
         layout_gauche = QVBoxLayout()
         layout_gauche.addWidget(group_controles)
         layout_gauche.addWidget(group_instructions)
@@ -238,7 +239,7 @@ class MainGameWindow(QMainWindow):
 
     def retour_menu(self):
         if self.player:
-            self.player.stop()   # arrêter la musique
+            self.player.stop()
         from interface import Window
         self.menu_window = Window()
         self.menu_window.showFullScreen()
@@ -247,7 +248,7 @@ class MainGameWindow(QMainWindow):
         # Mettre à jour la liste des avions toutes les secondes
         self.update_plane_list()
 
-    # ---------- Gestion liste <-> carte ----------
+    # Gestion liste <-> carte
     def update_plane_list(self):
         self.liste_avions.clear()
         for p in self.widget_carte.planes:
@@ -275,7 +276,7 @@ class MainGameWindow(QMainWindow):
         self.liste_avions.setCurrentItem(None)
 
 
-# ---------- Exécution ----------
+# Exécution
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainGameWindow()
