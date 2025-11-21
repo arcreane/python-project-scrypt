@@ -1,8 +1,9 @@
+# Carte.py
 import sys
 import random
 import math
-from PySide6.QtCore import Qt, QTimer, QPointF
-from PySide6.QtGui import QPainter, QColor, QFont, QPolygonF
+from PySide6.QtCore import Qt, QTimer, QPointF, Signal
+from PySide6.QtGui import QPainter, QColor, QFont, QPolygonF, QPen
 from PySide6.QtWidgets import QApplication, QWidget
 from Avions import Avions
 
@@ -31,10 +32,28 @@ class MovingPlane:
         self.pos.setY(self.pos.y() + self.vy)
 
         # Rebonds
-        if self.pos.x() < 0 or self.pos.x() > w:
+        bounced = False
+        if self.pos.x() < 0:
+            self.pos.setX(0)
             self.vx *= -1
-        if self.pos.y() < 0 or self.pos.y() > h:
+            bounced = True
+        elif self.pos.x() > w:
+            self.pos.setX(w)
+            self.vx *= -1
+            bounced = True
+
+        if self.pos.y() < 0:
+            self.pos.setY(0)
             self.vy *= -1
+            bounced = True
+        elif self.pos.y() > h:
+            self.pos.setY(h)
+            self.vy *= -1
+            bounced = True
+
+        # si rebond, mettre à jour last_angle pour garder orientation cohérente
+        if bounced and (self.vx != 0 or self.vy != 0):
+            self.last_angle = math.atan2(self.vy, self.vx)
 
     def update_fuel(self):
         conso_sec = self.avion.vitesse / 500.0
@@ -44,6 +63,7 @@ class MovingPlane:
         if self.avion.fuel == 0:
             self.vx = 0
             self.vy = 0
+            self.avion.altitude = 0
 
         self.blink += 1
 
@@ -90,12 +110,17 @@ class MovingPlane:
 
 
 class GameWidget(QWidget):
+    """Widget de la carte / zone de jeu."""
+    # Signal émis quand l'avion sélectionné change : on envoie l'instance Avions
+    avion_selectionne_changed = Signal(object)
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Avions - Triangles orientés")
         self.resize(800, 600)
 
         self.planes = []
+        self.selected_plane = None  # MovingPlane sélectionné
         self.add_plane()  # avion initial
 
         # Timer d’animation
@@ -121,8 +146,8 @@ class GameWidget(QWidget):
         return Avions(nom, altitude, vitesse, fuel, cap)
 
     def add_plane(self):
-        x = random.randint(50, 750)
-        y = random.randint(50, 550)
+        x = random.randint(50, max(50, self.width() - 50))
+        y = random.randint(50, max(50, self.height() - 50))
         avion = self.random_plane_data()
         self.planes.append(MovingPlane(avion, x, y))
 
@@ -155,8 +180,17 @@ class GameWidget(QWidget):
             ry = pt.x() * math.sin(angle) + pt.y() * math.cos(angle)
             rotated.append(QPointF(rx + plane.pos.x(), ry + plane.pos.y()))
 
+        # couleur de remplissage
         color = plane.get_color()
         painter.setBrush(QColor(*color))
+
+        # contour spécial si sélectionné
+        if plane is self.selected_plane:
+            pen = QPen(QColor(50, 120, 255), 3)  # contour bleu épais
+        else:
+            pen = QPen(Qt.black, 1)
+
+        painter.setPen(pen)
         painter.drawPolygon(QPolygonF(rotated))
 
     def paintEvent(self, event):
@@ -179,26 +213,81 @@ class GameWidget(QWidget):
 
     def mousePressEvent(self, event):
         pos = event.position()
+        clicked = False
         for p in self.planes:
             dx = pos.x() - p.pos.x()
             dy = pos.y() - p.pos.y()
             if dx*dx + dy*dy <= (p.size * 1.2)**2:
-                av = p.avion
+                self.selected_plane = p
+                clicked = True
 
-                # Calcul du cap réel selon vecteur déplacement
+                # émettre le signal avec l'objet Avions réel
+                self.avion_selectionne_changed.emit(p.avion)
+
+                # afficher infos dans la console (cap réel)
                 if p.vx != 0 or p.vy != 0:
                     real_cap = (math.degrees(math.atan2(p.vy, p.vx)) + 90) % 360
                 else:
-                    # si avion arrêté, garder le dernier angle
                     real_cap = (math.degrees(p.last_angle) + 90) % 360
 
-                print(f"✈️ {av.nom}")
-                print(f"  Altitude : {av.altitude} m")
-                print(f"  Vitesse  : {av.vitesse} km/h")
-                print(f"  Fuel     : {av.fuel:.1f} %")
+                print(f"✈️ {p.avion.nom}")
+                print(f"  Altitude : {p.avion.altitude} m")
+                print(f"  Vitesse  : {p.avion.vitesse} km/h")
+                print(f"  Fuel     : {p.avion.fuel:.1f} %")
                 print(f"  Cap      : {real_cap:.1f}°")
                 print()
                 break
+
+        if not clicked:
+            # cliquer nulle part désélectionne
+            self.selected_plane = None
+            self.avion_selectionne_changed.emit(None)
+
+        self.update()
+
+    # ---------- API pour contrôler l'avion sélectionné ----------
+    def _update_velocity_from_cap(self, plane: MovingPlane):
+        """Recalcule vx/vy à partir de plane.avion.cap et plane.avion.vitesse."""
+        if plane is None:
+            return
+        # normaliser cap
+        plane.avion.cap = plane.avion.cap % 360
+        # si fuel = 0 -> ne pas redémarrer
+        if plane.avion.fuel == 0:
+            plane.vx = 0
+            plane.vy = 0
+            return
+        rad = math.radians(plane.avion.cap - 90)
+        speed = plane.avion.vitesse / 250.0
+        plane.vx = math.cos(rad) * speed
+        plane.vy = math.sin(rad) * speed
+        # mettre à jour last_angle
+        if plane.vx != 0 or plane.vy != 0:
+            plane.last_angle = math.atan2(plane.vy, plane.vx)
+
+    def monter_selected(self):
+        if self.selected_plane:
+            self.selected_plane.avion.monter()
+            # altitude modifiée, on peut rafraîchir immédiatement
+            self.update()
+
+    def descendre_selected(self):
+        if self.selected_plane:
+            self.selected_plane.avion.descendre()
+            self.update()
+
+    def gauche_selected(self):
+        if self.selected_plane:
+            self.selected_plane.avion.gauche()
+            # mettre à jour la vitesse/orientation graphique
+            self._update_velocity_from_cap(self.selected_plane)
+            self.update()
+
+    def droite_selected(self):
+        if self.selected_plane:
+            self.selected_plane.avion.droite()
+            self._update_velocity_from_cap(self.selected_plane)
+            self.update()
 
 
 if __name__ == "__main__":

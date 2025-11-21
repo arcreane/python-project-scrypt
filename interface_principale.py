@@ -19,14 +19,16 @@ class MainGameWindow(QMainWindow):
         label_message = QLabel("Message"); label_message.setFrameShape(QFrame.Panel)
         label_piste = QLabel("Piste de côté"); label_piste.setFrameShape(QFrame.Panel)
 
-        # Carte
+        # Carte (GameWidget intégré dans un QGroupBox)
         carte = QGroupBox("Carte")
         layout_carte = QVBoxLayout()
         layout_carte.setContentsMargins(0, 0, 0, 0)
         layout_carte.setSpacing(0)
-        widget_carte = Carte.GameWidget()
-        widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        layout_carte.addWidget(widget_carte)
+
+        # GameWidget
+        self.widget_carte = Carte.GameWidget()
+        self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        layout_carte.addWidget(self.widget_carte)
         carte.setLayout(layout_carte)
 
         # Boutons
@@ -41,6 +43,12 @@ class MainGameWindow(QMainWindow):
         # Uniformiser la taille
         for b in [btn_monter, btn_descendre, btn_gauche, btn_droite, btn_atterrir, btn_attente, btn_urgence]:
             b.setFixedHeight(60)
+
+        # Connecter les boutons de direction à la GameWidget
+        btn_monter.clicked.connect(self.widget_carte.monter_selected)
+        btn_descendre.clicked.connect(self.widget_carte.descendre_selected)
+        btn_gauche.clicked.connect(self.widget_carte.gauche_selected)
+        btn_droite.clicked.connect(self.widget_carte.droite_selected)
 
         # GroupBox Contrôles (légende en haut, puis Urgence, Attente, Atterrir en bas)
         group_controles = QGroupBox("Contrôles")
