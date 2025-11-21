@@ -15,6 +15,7 @@ class MainGameWindow(QMainWindow):
 
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
+        self.menu_window = None
 
         # Labels
         label_stats = QLabel("Stats"); label_stats.setFrameShape(QFrame.Panel)
@@ -134,10 +135,58 @@ class MainGameWindow(QMainWindow):
         btn_pause = QPushButton("Pause")
         btn_recommencer = QPushButton("Recommencer")
         btn_quitter = QPushButton("Quitter")
-        btn_quitter.clicked.connect(self.close)
+        btn_quitter.clicked.connect(self.retour_menu)
         layout_barre.addWidget(btn_pause)
         layout_barre.addWidget(btn_recommencer)
         layout_barre.addWidget(btn_quitter)
+
+        # Bouton Pause
+        btn_pause.setStyleSheet("""
+             QPushButton {
+                 background-color: rgba(80, 150, 255, 140); 
+                 color: white;
+                 border-radius: 10px;
+                 padding: 8px 16px;
+                 font-size: 16px;               /* taille uniforme */
+                 font-family: 'Comic Sans MS';  /* police uniforme */
+                 font-weight: bold;
+             }
+             QPushButton:hover {
+                 background-color: #C5A6F0;
+             }
+         """)
+
+        # Bouton Recommencer
+        btn_recommencer.setStyleSheet("""
+             QPushButton {
+                 background-color: #5BC074;
+                 color: white;
+                 border-radius: 10px;
+                 padding: 8px 16px;
+                 font-size: 16px;
+                 font-family: 'Comic Sans MS';
+                 font-weight: bold;
+             }
+             QPushButton:hover {
+                 background-color: #79D890;
+             }
+         """)
+
+        # Bouton Quitter
+        btn_quitter.setStyleSheet("""
+             QPushButton {
+                 background-color: #E85757;
+                 color: white;
+                 border-radius: 10px;
+                 padding: 8px 16px;
+                 font-size: 16px;
+                 font-family: 'Comic Sans MS';
+                 font-weight: bold;
+             }
+             QPushButton:hover {
+                 background-color: #FF6F6F;
+             }
+         """)
 
         # Layout global
         layout_global = QVBoxLayout()
@@ -148,6 +197,11 @@ class MainGameWindow(QMainWindow):
         central_widget.setLayout(layout_global)
         self.setCentralWidget(central_widget)
 
+    def retour_menu(self):
+        from interface import Window
+        self.menu_window = Window()
+        self.menu_window.showFullScreen()
+        self.close()
 
 # Exécution
 if __name__ == "__main__":
