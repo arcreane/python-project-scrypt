@@ -7,7 +7,8 @@ from PySide6.QtCore import Qt, QTimer
 from Carte import GameWidget
 from Avions import Avions
 from message_defilant import MarqueeLabel
-
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtCore import QUrl
 
 class MainGameWindow(QMainWindow):
     def __init__(self):
@@ -85,6 +86,14 @@ class MainGameWindow(QMainWindow):
         layout_avions = QVBoxLayout()
         layout_avions.addWidget(self.liste_avions)
         group_avions.setLayout(layout_avions)
+
+        # Musique d'ambiance
+        self.player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.player.setAudioOutput(self.audio_output)
+        self.player.setSource(QUrl.fromLocalFile("musique_de_fond_interface_principale.mp3"))
+        self.player.setLoops(QMediaPlayer.Infinite)  # boucle infinie
+        self.player.play()
 
         # Connecter sélection dans la liste à la carte
         self.liste_avions.currentItemChanged.connect(self.on_liste_avion_selected)
@@ -227,11 +236,13 @@ class MainGameWindow(QMainWindow):
         central_widget.setLayout(layout_global)
         self.setCentralWidget(central_widget)
 
-        def retour_menu(self):
-            from interface import Window
-            self.menu_window = Window()
-            self.menu_window.showFullScreen()
-            self.close()
+    def retour_menu(self):
+        if self.player:
+            self.player.stop()   # arrêter la musique
+        from interface import Window
+        self.menu_window = Window()
+        self.menu_window.showFullScreen()
+        self.close()
 
         # Mettre à jour la liste des avions toutes les secondes
         self.update_plane_list()
