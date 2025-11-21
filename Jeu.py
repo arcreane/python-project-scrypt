@@ -16,7 +16,7 @@ class MainGameWindow(QMainWindow):
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
 
-        # Barre du haut
+        # ---------- Barre du haut ----------
         barre_haut = QWidget()
         barre_haut.setMaximumHeight(40)
         barre_haut.setStyleSheet("background-color: #5D4482;")
@@ -26,8 +26,8 @@ class MainGameWindow(QMainWindow):
 
         message_label = QLabel("L'équipe Scrypt vous souhaite une bonne partie !")
         message_label.setAlignment(Qt.AlignCenter)
-        font = message_label.font();
-        font.setPointSize(18);
+        font = message_label.font()
+        font.setPointSize(18)
         font.setBold(True)
         message_label.setFont(font)
         message_label.setStyleSheet("color: white;")
@@ -42,53 +42,19 @@ class MainGameWindow(QMainWindow):
         layout_barre.addWidget(btn_recommencer)
         layout_barre.addWidget(btn_quitter)
 
-        # Bouton Pause
+        # Style des boutons
         btn_pause.setStyleSheet("""
-                     QPushButton {
-                         background-color: rgba(80, 150, 255, 140); 
-                         color: white;
-                         border-radius: 10px;
-                         padding: 8px 16px;
-                         font-size: 16px;               /* taille uniforme */
-                         font-family: 'Comic Sans MS';  /* police uniforme */
-                         font-weight: bold;
-                     }
-                     QPushButton:hover {
-                         background-color: #C5A6F0;
-                     }
-                 """)
-
-        # Bouton Recommencer
+            QPushButton { background-color: rgba(80, 150, 255, 140); color: white; border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; }
+            QPushButton:hover { background-color: #C5A6F0; }
+        """)
         btn_recommencer.setStyleSheet("""
-                     QPushButton {
-                         background-color: #5BC074;
-                         color: white;
-                         border-radius: 10px;
-                         padding: 8px 16px;
-                         font-size: 16px;
-                         font-family: 'Comic Sans MS';
-                         font-weight: bold;
-                     }
-                     QPushButton:hover {
-                         background-color: #79D890;
-                     }
-                 """)
-
-        # Bouton Quitter
+            QPushButton { background-color: #5BC074; color: white; border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; }
+            QPushButton:hover { background-color: #79D890; }
+        """)
         btn_quitter.setStyleSheet("""
-                     QPushButton {
-                         background-color: #E85757;
-                         color: white;
-                         border-radius: 10px;
-                         padding: 8px 16px;
-                         font-size: 16px;
-                         font-family: 'Comic Sans MS';
-                         font-weight: bold;
-                     }
-                     QPushButton:hover {
-                         background-color: #FF6F6F;
-                     }
-                 """)
+            QPushButton { background-color: #E85757; color: white; border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; }
+            QPushButton:hover { background-color: #FF6F6F; }
+        """)
 
         # ---------- Zone centrale ----------
         self.label_stats = QLabel("Stats")
@@ -117,8 +83,8 @@ class MainGameWindow(QMainWindow):
         self.liste_avions.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.liste_avions.setAlternatingRowColors(True)
         self.liste_avions.setStyleSheet("""
-        QListWidget::item:selected { background-color: #88C0D0; color: black; }
-        QListWidget::item:hover { background-color: #A3D0E0; }
+            QListWidget::item:selected { background-color: #88C0D0; color: black; }
+            QListWidget::item:hover { background-color: #A3D0E0; }
         """)
 
         group_avions = QGroupBox("Avions")
@@ -126,7 +92,7 @@ class MainGameWindow(QMainWindow):
         layout_avions.addWidget(self.liste_avions)
         group_avions.setLayout(layout_avions)
 
-        # Musique d'ambiance
+        # ---------- Musique d'ambiance ----------
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.player.setAudioOutput(self.audio_output)
@@ -147,6 +113,7 @@ class MainGameWindow(QMainWindow):
                   btn_atterrir, btn_attente, btn_urgence]:
             b.setFixedHeight(60)
 
+        # Connexion des boutons
         btn_monter.clicked.connect(self.widget_carte.monter_selected)
         btn_descendre.clicked.connect(self.widget_carte.descendre_selected)
         btn_gauche.clicked.connect(self.widget_carte.gauche_selected)
@@ -168,7 +135,7 @@ class MainGameWindow(QMainWindow):
         layout_instructions.addWidget(btn_droite)
         group_instructions.setLayout(layout_instructions)
 
-        # Layouts principaux
+        # ---------- Layouts principaux ----------
         layout_gauche = QVBoxLayout()
         layout_gauche.addWidget(group_controles)
         layout_gauche.addWidget(group_instructions)
@@ -203,6 +170,18 @@ class MainGameWindow(QMainWindow):
 
     # ---------- Mise à jour instantanée de la liste ----------
     def update_plane_list_item(self, plane):
+        """Met à jour la liste des avions et supprime après 5s d'arrêt."""
+        if plane not in self.widget_carte.planes:
+            # Supprime de la liste si présent
+            for i in range(self.liste_avions.count()):
+                item = self.liste_avions.item(i)
+                p = item.data(Qt.UserRole)
+                if p == plane:
+                    self.liste_avions.takeItem(i)
+                    return
+            return
+
+        # Sinon, met à jour ou ajoute l’avion dans la liste
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             p = item.data(Qt.UserRole)
@@ -212,7 +191,8 @@ class MainGameWindow(QMainWindow):
                     f"Fuel: {p.avion.fuel:.1f}% - Cap: {p.avion.cap:.1f}°"
                 )
                 return
-        # Si avion absent, l'ajouter
+
+        # Si absent, l'ajouter
         item = QListWidgetItem(
             f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - "
             f"Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°"

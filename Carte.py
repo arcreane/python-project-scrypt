@@ -1,4 +1,3 @@
-# Carte.py
 import sys
 import random
 import math
@@ -14,7 +13,6 @@ class MovingPlane:
         self.avion = avion
         self.pos = QPointF(x, y)
 
-        # Déplacement initial selon cap (0° = haut)
         rad = math.radians(self.avion.cap - 90)
         speed = self.avion.vitesse / 250.0
         self.vx = math.cos(rad) * speed
@@ -23,7 +21,6 @@ class MovingPlane:
         self.size = 20
         self.blink = 0
         self.last_angle = rad
-
         self.update_avion_cap()
 
     def move(self, w, h):
@@ -35,7 +32,6 @@ class MovingPlane:
             self.pos.setX(0); self.vx *= -1; bounced = True
         elif self.pos.x() > w:
             self.pos.setX(w); self.vx *= -1; bounced = True
-
         if self.pos.y() < 0:
             self.pos.setY(0); self.vy *= -1; bounced = True
         elif self.pos.y() > h:
@@ -101,6 +97,7 @@ class GameWidget(QWidget):
 
         self.planes = []
         self.selected_plane = None
+        self.stop_timers = {}  # timers pour suppression après 5s
 
         self.add_plane()
 
@@ -130,8 +127,9 @@ class GameWidget(QWidget):
         x = random.randint(50, max(50, self.width() - 50))
         y = random.randint(50, max(50, self.height() - 50))
         avion = self.random_plane_data()
-        self.planes.append(MovingPlane(avion, x, y))
-        self.avion_updated.emit(self.planes[-1])
+        plane = MovingPlane(avion, x, y)
+        self.planes.append(plane)
+        self.avion_updated.emit(plane)
 
     def spawn_plane(self):
         self.add_plane()
@@ -139,11 +137,30 @@ class GameWidget(QWidget):
 
     def update_game(self):
         w, h = self.width(), self.height()
-        for p in self.planes:
+        for p in self.planes[:]:
+            prev_vx, prev_vy = p.vx, p.vy
             p.move(w, h)
             p.update_fuel()
             self.avion_updated.emit(p)
+
+            # Détecter que l’avion vient de s’arrêter
+            if (prev_vx != 0 or prev_vy != 0) and p.vx == 0 and p.vy == 0:
+                if p not in self.stop_timers:
+                    timer = QTimer(self)
+                    timer.setSingleShot(True)
+                    timer.timeout.connect(lambda pl=p: self.remove_plane(pl))
+                    timer.start(5000)  # 5 secondes
+                    self.stop_timers[p] = timer
+
         self.update()
+
+    def remove_plane(self, plane):
+        """Supprime l’avion de la carte et déclenche la mise à jour de la liste"""
+        if plane in self.planes:
+            self.planes.remove(plane)
+        if plane in self.stop_timers:
+            self.stop_timers.pop(plane)
+        self.avion_updated.emit(plane)  # signal vers Jeu.py pour mettre à jour la liste
 
     def draw_triangle(self, painter, plane: MovingPlane):
         angle = plane.angle()
