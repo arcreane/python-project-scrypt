@@ -112,6 +112,7 @@ class MainGameWindow(QMainWindow):
         btn_pause = QPushButton("Pause")
         btn_recommencer = QPushButton("Recommencer")
         btn_quitter = QPushButton("Quitter")
+        btn_quitter.clicked.connect(self.close)
         layout_barre.addWidget(btn_pause)
         layout_barre.addWidget(btn_recommencer)
         layout_barre.addWidget(btn_quitter)
