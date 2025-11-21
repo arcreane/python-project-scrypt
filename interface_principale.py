@@ -9,8 +9,6 @@ from liste_avions_hélicos_test import ListeAvionsHelis
 from message_defilant import MarqueeLabel
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import QUrl
-from carte_view import CarteView
-
 
 class MainGameWindow(QMainWindow):
     def __init__(self):
@@ -36,7 +34,7 @@ class MainGameWindow(QMainWindow):
         layout_carte.setSpacing(0)
 
         # GameWidget
-        self.widget_carte = CarteView()
+        self.widget_carte = Carte.GameWidget()
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout_carte.addWidget(self.widget_carte)
         carte.setLayout(layout_carte)
@@ -72,6 +70,10 @@ class MainGameWindow(QMainWindow):
         # GroupBox Contrôles (légende en haut, puis Urgence, Attente, Atterrir en bas)
         group_controles = QGroupBox("Contrôles")
         layout_controles = QVBoxLayout()
+
+        # Légende en haut
+        label_legende = QLabel("Avions en rouge = urgence\nAvions en orange = attente")
+        layout_controles.addWidget(label_legende)
 
         # Stretch pour pousser les boutons vers le bas
         layout_controles.addStretch(1)

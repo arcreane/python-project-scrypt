@@ -26,6 +26,9 @@ class MovingPlane:
         # Dernier angle valide pour conserver orientation si avion arrêté
         self.last_angle = rad
 
+        # Mettre à jour le cap initial de l'avion
+        self.update_avion_cap()
+
     def move(self, w, h):
         # Déplacement
         self.pos.setX(self.pos.x() + self.vx)
@@ -54,6 +57,7 @@ class MovingPlane:
         # si rebond, mettre à jour last_angle pour garder orientation cohérente
         if bounced and (self.vx != 0 or self.vy != 0):
             self.last_angle = math.atan2(self.vy, self.vx)
+            self.update_avion_cap()
 
     def update_fuel(self):
         conso_sec = self.avion.vitesse / 500.0
@@ -64,12 +68,14 @@ class MovingPlane:
             self.vx = 0
             self.vy = 0
             self.avion.altitude = 0
+            self.update_avion_cap()  # figer le cap si avion arrêté
 
         self.blink += 1
 
         # Met à jour le dernier angle si avion en mouvement
         if self.vx != 0 or self.vy != 0:
             self.last_angle = math.atan2(self.vy, self.vx)
+            self.update_avion_cap()
 
     def angle(self):
         # Angle du triangle : mouvement réel si en mouvement, sinon dernier angle
@@ -107,6 +113,12 @@ class MovingPlane:
                 color = warning_color
 
         return color
+
+    def update_avion_cap(self):
+        """Met à jour avion.cap selon la direction réelle du mouvement."""
+        if self.vx != 0 or self.vy != 0:
+            self.avion.cap = (math.degrees(math.atan2(self.vy, self.vx)) + 90) % 360
+
 
 
 class GameWidget(QWidget):
