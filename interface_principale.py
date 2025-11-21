@@ -71,10 +71,6 @@ class MainGameWindow(QMainWindow):
         group_controles = QGroupBox("Contrôles")
         layout_controles = QVBoxLayout()
 
-        # Légende en haut
-        label_legende = QLabel("Avions en rouge = urgence\nAvions en orange = attente")
-        layout_controles.addWidget(label_legende)
-
         # Stretch pour pousser les boutons vers le bas
         layout_controles.addStretch(1)
 
