@@ -241,7 +241,7 @@ class MainGameWindow(QMainWindow):
     def retour_menu(self):
         if self.player:
             self.player.stop()
-        from interface import Window
+        from Accueil import Window
         self.menu_window = Window()
         self.menu_window.showFullScreen()
         self.close()

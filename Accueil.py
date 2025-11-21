@@ -5,7 +5,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QLabel
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtWidgets import QMessageBox, QHBoxLayout
-from interface_principale import MainGameWindow
+from Jeu import MainGameWindow
 
 
 class Window(QWidget):
