@@ -10,6 +10,7 @@ from message_defilant import MarqueeLabel
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import QUrl
 
+
 class MainGameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -70,7 +71,6 @@ class MainGameWindow(QMainWindow):
         self.liste_avions.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.liste_avions.setAlternatingRowColors(True)
 
-        # Style pour surlignage plus clair
         self.liste_avions.setStyleSheet("""
         QListWidget::item:selected {
             background-color: #88C0D0;
@@ -81,7 +81,6 @@ class MainGameWindow(QMainWindow):
         }
         """)
 
-        # Encapsuler dans un GroupBox pour la bordure
         group_avions = QGroupBox("Avions")
         layout_avions = QVBoxLayout()
         layout_avions.addWidget(self.liste_avions)
@@ -92,10 +91,10 @@ class MainGameWindow(QMainWindow):
         self.audio_output = QAudioOutput()
         self.player.setAudioOutput(self.audio_output)
         self.player.setSource(QUrl.fromLocalFile("musique_de_fond_interface_principale.mp3"))
-        self.player.setLoops(QMediaPlayer.Infinite)  # boucle infinie
+        self.player.setLoops(QMediaPlayer.Infinite)
         self.player.play()
 
-        # Connecter sélection dans la liste à la carte
+        # Connecter sélection liste <-> carte
         self.liste_avions.currentItemChanged.connect(self.on_liste_avion_selected)
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
 
@@ -112,13 +111,11 @@ class MainGameWindow(QMainWindow):
                   btn_atterrir, btn_attente, btn_urgence]:
             b.setFixedHeight(60)
 
-        # Connecter boutons à GameWidget
         btn_monter.clicked.connect(self.widget_carte.monter_selected)
         btn_descendre.clicked.connect(self.widget_carte.descendre_selected)
         btn_gauche.clicked.connect(self.widget_carte.gauche_selected)
         btn_droite.clicked.connect(self.widget_carte.droite_selected)
 
-        # GroupBox Contrôles
         group_controles = QGroupBox("Contrôles")
         layout_controles = QVBoxLayout()
         layout_controles.addStretch(1)
@@ -127,7 +124,6 @@ class MainGameWindow(QMainWindow):
         layout_controles.addWidget(btn_atterrir)
         group_controles.setLayout(layout_controles)
 
-        # GroupBox Instructions
         group_instructions = QGroupBox("Instructions")
         layout_instructions = QVBoxLayout()
         layout_instructions.addWidget(btn_monter)
@@ -165,7 +161,9 @@ class MainGameWindow(QMainWindow):
 
         message_label = QLabel("L'équipe Scrypt vous souhaite une bonne partie !")
         message_label.setAlignment(Qt.AlignCenter)
-        font = message_label.font(); font.setPointSize(18); font.setBold(True)
+        font = message_label.font();
+        font.setPointSize(18);
+        font.setBold(True)
         message_label.setFont(font)
         message_label.setStyleSheet("color: white;")
         layout_barre.addWidget(message_label)
@@ -181,51 +179,51 @@ class MainGameWindow(QMainWindow):
 
         # Bouton Pause
         btn_pause.setStyleSheet("""
-             QPushButton {
-                 background-color: rgba(80, 150, 255, 140); 
-                 color: white;
-                 border-radius: 10px;
-                 padding: 8px 16px;
-                 font-size: 16px;               /* taille uniforme */
-                 font-family: 'Comic Sans MS';  /* police uniforme */
-                 font-weight: bold;
-             }
-             QPushButton:hover {
-                 background-color: #C5A6F0;
-             }
-         """)
+                     QPushButton {
+                         background-color: rgba(80, 150, 255, 140); 
+                         color: white;
+                         border-radius: 10px;
+                         padding: 8px 16px;
+                         font-size: 16px;               /* taille uniforme */
+                         font-family: 'Comic Sans MS';  /* police uniforme */
+                         font-weight: bold;
+                     }
+                     QPushButton:hover {
+                         background-color: #C5A6F0;
+                     }
+                 """)
 
         # Bouton Recommencer
         btn_recommencer.setStyleSheet("""
-             QPushButton {
-                 background-color: #5BC074;
-                 color: white;
-                 border-radius: 10px;
-                 padding: 8px 16px;
-                 font-size: 16px;
-                 font-family: 'Comic Sans MS';
-                 font-weight: bold;
-             }
-             QPushButton:hover {
-                 background-color: #79D890;
-             }
-         """)
+                     QPushButton {
+                         background-color: #5BC074;
+                         color: white;
+                         border-radius: 10px;
+                         padding: 8px 16px;
+                         font-size: 16px;
+                         font-family: 'Comic Sans MS';
+                         font-weight: bold;
+                     }
+                     QPushButton:hover {
+                         background-color: #79D890;
+                     }
+                 """)
 
         # Bouton Quitter
         btn_quitter.setStyleSheet("""
-             QPushButton {
-                 background-color: #E85757;
-                 color: white;
-                 border-radius: 10px;
-                 padding: 8px 16px;
-                 font-size: 16px;
-                 font-family: 'Comic Sans MS';
-                 font-weight: bold;
-             }
-             QPushButton:hover {
-                 background-color: #FF6F6F;
-             }
-         """)
+                     QPushButton {
+                         background-color: #E85757;
+                         color: white;
+                         border-radius: 10px;
+                         padding: 8px 16px;
+                         font-size: 16px;
+                         font-family: 'Comic Sans MS';
+                         font-weight: bold;
+                     }
+                     QPushButton:hover {
+                         background-color: #FF6F6F;
+                     }
+                 """)
 
         # Layout global
         layout_global = QVBoxLayout()
@@ -236,37 +234,49 @@ class MainGameWindow(QMainWindow):
         central_widget.setLayout(layout_global)
         self.setCentralWidget(central_widget)
 
+        # ---------- Timer de mise à jour liste ----------
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self.update_plane_list)
+        self.update_timer.start(1000)  # toutes les secondes
+
+    # ---------- Retour au menu ----------
     def retour_menu(self):
         if self.player:
-            self.player.stop()   # arrêter la musique
+            self.player.stop()
         from interface import Window
         self.menu_window = Window()
         self.menu_window.showFullScreen()
         self.close()
 
-        # Mettre à jour la liste des avions toutes les secondes
-        self.update_plane_list()
-
-    # ---------- Gestion liste <-> carte ----------
+    # ---------- Mise à jour de la liste ----------
     def update_plane_list(self):
+        current_plane = None
+        current_item = self.liste_avions.currentItem()
+        if current_item:
+            current_plane = current_item.data(Qt.UserRole)
+
         self.liste_avions.clear()
         for p in self.widget_carte.planes:
             item = QListWidgetItem(
                 f"{p.avion.nom} - Alt: {p.avion.altitude} m - Vit: {p.avion.vitesse} km/h - "
-                f"Fuel: {p.avion.fuel:.1f}% - Cap: {p.avion.cap}°"
+                f"Fuel: {p.avion.fuel:.1f}% - Cap: {p.avion.cap:.1f}°"
             )
             item.setData(Qt.UserRole, p)
             self.liste_avions.addItem(item)
-        QTimer.singleShot(1000, self.update_plane_list)
 
+            # Restaurer la sélection si c'était le même avion
+            if current_plane == p:
+                self.liste_avions.setCurrentItem(item)
+
+    # ---------- Sélection liste -> carte ----------
     def on_liste_avion_selected(self, current, previous):
         if current:
             plane = current.data(Qt.UserRole)
             self.widget_carte.selected_plane = plane
             self.widget_carte.update()
 
+    # ---------- Sélection carte -> liste ----------
     def on_carte_avion_selected(self, avion):
-        # mettre à jour la sélection dans la liste
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole).avion == avion:
