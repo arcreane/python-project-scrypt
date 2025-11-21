@@ -42,11 +42,11 @@ class MainGameWindow(QMainWindow):
         # Musique d'ambiance
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
+        self.audio_output.setVolume(0.5)
         self.player.setAudioOutput(self.audio_output)
         self.player.setSource(QUrl.fromLocalFile("musique_de_fond_interface_principale.mp3"))
         self.player.setLoops(QMediaPlayer.Infinite)  # boucle infinie
         self.player.play()
-
 
         # Boutons
         btn_monter = QPushButton("Monter")
@@ -214,7 +214,6 @@ class MainGameWindow(QMainWindow):
         self.menu_window = Window()
         self.menu_window.showFullScreen()
         self.close()
-
 
 # Exécution
 if __name__ == "__main__":
