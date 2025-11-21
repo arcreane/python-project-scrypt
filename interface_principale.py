@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from liste_avions_hélicos_test import ListeAvionsHelis
+from message_defilant import MarqueeLabel
+
 
 class MainGameWindow(QMainWindow):
     def __init__(self):
@@ -19,7 +21,11 @@ class MainGameWindow(QMainWindow):
         label_message = QLabel("Message"); label_message.setFrameShape(QFrame.Panel)
         label_piste = QLabel("Piste de côté"); label_piste.setFrameShape(QFrame.Panel)
 
-        # Carte (GameWidget intégré dans un QGroupBox)
+        # Message défilant
+        marquee_message = MarqueeLabel("Rien à signaler")
+        marquee_message.setFixedHeight(40)
+
+        # Carte
         carte = QGroupBox("Carte")
         layout_carte = QVBoxLayout()
         layout_carte.setContentsMargins(0, 0, 0, 0)
@@ -96,7 +102,7 @@ class MainGameWindow(QMainWindow):
 
         layout_centre = QVBoxLayout()
         layout_centre.addWidget(carte, 5)
-        layout_centre.addWidget(label_message, 1)
+        layout_centre.addWidget(marquee_message, 1)
         layout_centre.addWidget(label_piste, 5)
 
         layout_droite = QVBoxLayout()
