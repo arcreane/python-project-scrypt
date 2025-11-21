@@ -3,12 +3,10 @@ from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
     QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem
 )
-from PySide6.QtCore import Qt, QTimer
-from Carte import GameWidget
-from Avions import Avions
-from message_defilant import MarqueeLabel
+from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtCore import QUrl
+from Carte import GameWidget
+from message_defilant import MarqueeLabel
 
 
 class MainGameWindow(QMainWindow):
