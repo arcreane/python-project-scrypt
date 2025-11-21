@@ -1,9 +1,8 @@
 import sys
-import Avions
 import Carte
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
-    QPushButton, QFrame, QGroupBox
+    QPushButton, QFrame, QGroupBox, QSizePolicy
 )
 from PySide6.QtCore import Qt
 from liste_avions_hélicos_test import ListeAvionsHelis
@@ -17,9 +16,18 @@ class MainGameWindow(QMainWindow):
 
         # Labels
         label_stats = QLabel("Stats"); label_stats.setFrameShape(QFrame.Panel)
-        label_carte = Carte.GameWidget()
         label_message = QLabel("Message"); label_message.setFrameShape(QFrame.Panel)
         label_piste = QLabel("Piste de côté"); label_piste.setFrameShape(QFrame.Panel)
+
+        # Carte
+        carte = QGroupBox("Carte")
+        layout_carte = QVBoxLayout()
+        layout_carte.setContentsMargins(0, 0, 0, 0)
+        layout_carte.setSpacing(0)
+        widget_carte = Carte.GameWidget()
+        widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        layout_carte.addWidget(widget_carte)
+        carte.setLayout(layout_carte)
 
         # Boutons
         btn_monter = QPushButton("Monter")
@@ -79,7 +87,7 @@ class MainGameWindow(QMainWindow):
         layout_gauche.addWidget(group_instructions)  # en bas
 
         layout_centre = QVBoxLayout()
-        layout_centre.addWidget(label_carte, 5)
+        layout_centre.addWidget(carte, 5)
         layout_centre.addWidget(label_message, 1)
         layout_centre.addWidget(label_piste, 5)
 
