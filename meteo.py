@@ -1,11 +1,10 @@
 import random
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QTimer, Qt, QRectF
 from PySide6.QtGui import QPixmap
 
 class MeteoManager:
     def __init__(self, parent_widget):
-
         self.parent_widget = parent_widget
 
         # Dictionnaire événements -> icônes
@@ -21,6 +20,9 @@ class MeteoManager:
             "givre": (80, 80),
             "foudre": (80, 120)
         }
+
+        # Liste des événements actifs
+        self.evenements_actifs = []
 
         # Timer pour lancer les événements aléatoires
         self.timer = QTimer()
@@ -47,15 +49,32 @@ class MeteoManager:
         # Position aléatoire dans le widget_carte
         parent_width = self.parent_widget.width()
         parent_height = self.parent_widget.height()
-        x = random.randint(0, max(0, parent_width - 20))
-        y = random.randint(0, max(0, parent_height - 20))
+        x = random.randint(0, max(0, parent_width - width))
+        y = random.randint(0, max(0, parent_height - height))
         label.move(x, y)
         label.setAttribute(Qt.WA_TransparentForMouseEvents)  # laisser passer les clics
         label.show()
 
-        # Supprimer l'événement après 5 à 10 secondes
+        # Ajouter à la liste des événements actifs
+        rect = QRectF(x, y, width, height)
+        self.evenements_actifs.append({"type": evenement, "label": label, "rect": rect})
+
+        # Supprimer après 5 à 10 secondes
         duree = random.randint(5_000, 10_000)
-        QTimer.singleShot(duree, label.deleteLater)
+
+        def supprimer_event():
+            # Retirer l'événement actif et supprimer le label
+            self.evenements_actifs = [
+                e for e in self.evenements_actifs if e["label"] != label
+            ]
+            label.deleteLater()
+
+        QTimer.singleShot(duree, supprimer_event)
 
         # Relancer le timer pour le prochain événement
         self.demarrer_timer_aleatoire()
+
+    # ---------- Méthode pour la carte / avion ----------
+    def get_evenements_actifs(self):
+        """Renvoie une liste de tuples (rect, type) pour collision/évitement"""
+        return [(e["rect"], e["type"]) for e in self.evenements_actifs]
