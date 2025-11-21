@@ -14,16 +14,11 @@ class MainGameWindow(QMainWindow):
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
 
-
         # Labels
         label_stats = QLabel("Stats"); label_stats.setFrameShape(QFrame.Panel)
         label_vue = QLabel("Vue de haut"); label_vue.setFrameShape(QFrame.Panel)
         label_message = QLabel("Message"); label_message.setFrameShape(QFrame.Panel)
         label_piste = QLabel("Piste de côté"); label_piste.setFrameShape(QFrame.Panel)
-        label_controles = QLabel("Contrôles"); label_controles.setFrameShape(QFrame.Panel)
-        label_instr = QLabel("Instructions"); label_instr.setFrameShape(QFrame.Panel)
-        label_actions = QLabel("Actions"); label_actions.setFrameShape(QFrame.Panel)
-
 
         # Boutons
         btn_monter = QPushButton("Monter")
@@ -31,28 +26,39 @@ class MainGameWindow(QMainWindow):
         btn_gauche = QPushButton("Gauche")
         btn_droite = QPushButton("Droite")
         btn_atterrir = QPushButton("Atterrir")
+        btn_attente = QPushButton("Attente")
+        btn_urgence = QPushButton("Urgence")
 
-        # Même taille pour cohérence
-        for b in [btn_monter, btn_descendre, btn_gauche, btn_droite, btn_atterrir]:
+        # Uniformiser la taille
+        for b in [btn_monter, btn_descendre, btn_gauche, btn_droite, btn_atterrir, btn_attente, btn_urgence]:
             b.setFixedHeight(60)
 
-        # GROUPBOX instructions/action
+        # GroupBox Contrôles (légende en haut, puis Urgence, Attente, Atterrir en bas)
+        group_controles = QGroupBox("Contrôles")
+        layout_controles = QVBoxLayout()
+
+        # Légende en haut
+        label_legende = QLabel("Avions en rouge = urgence\nAvions en orange = attente")
+        layout_controles.addWidget(label_legende)
+
+        # Stretch pour pousser les boutons vers le bas
+        layout_controles.addStretch(1)
+
+        # Boutons en bas dans l'ordre : Urgence, Attente, Atterrir
+        layout_controles.addWidget(btn_urgence)
+        layout_controles.addWidget(btn_attente)
+        layout_controles.addWidget(btn_atterrir)
+
+        group_controles.setLayout(layout_controles)
+
+        # GroupBox Instructions (les 4 boutons de direction)
         group_instructions = QGroupBox("Instructions")
         layout_instructions = QVBoxLayout()
         layout_instructions.addWidget(btn_monter)
         layout_instructions.addWidget(btn_descendre)
+        layout_instructions.addWidget(btn_gauche)
+        layout_instructions.addWidget(btn_droite)
         group_instructions.setLayout(layout_instructions)
-
-        group_actions = QGroupBox("Actions")
-        layout_actions = QVBoxLayout()
-        layout_actions.addWidget(btn_gauche)
-        layout_actions.addWidget(btn_droite)
-        group_actions.setLayout(layout_actions)
-
-        group_controles = QGroupBox("Contrôles")
-        layout_controles = QVBoxLayout()
-        group_controles.setLayout(layout_controles)
-
 
         # Données avions/hélicos
         avions_data = [
@@ -66,12 +72,10 @@ class MainGameWindow(QMainWindow):
         ]
         widget_avions_helicos = ListeAvionsHelis(avions=avions_data, helis=helis_data)
 
-
         # Layouts colonnes
         layout_gauche = QVBoxLayout()
-        layout_gauche.addWidget(group_controles)
-        layout_gauche.addWidget(group_instructions)
-        layout_gauche.addWidget(group_actions)
+        layout_gauche.addWidget(group_controles)     # en haut
+        layout_gauche.addWidget(group_instructions)  # en bas
 
         layout_centre = QVBoxLayout()
         layout_centre.addWidget(label_vue, 5)
@@ -82,13 +86,11 @@ class MainGameWindow(QMainWindow):
         layout_droite.addWidget(label_stats)
         layout_droite.addWidget(widget_avions_helicos, 0, Qt.AlignTop)
 
-
         # Layout horizontal principal
         layout_zone_jeu = QHBoxLayout()
         layout_zone_jeu.addLayout(layout_droite, 1)
         layout_zone_jeu.addLayout(layout_centre, 2)
         layout_zone_jeu.addLayout(layout_gauche, 1)
-
 
         # Barre du haut
         barre_haut = QWidget()
@@ -112,7 +114,6 @@ class MainGameWindow(QMainWindow):
         layout_barre.addWidget(btn_pause)
         layout_barre.addWidget(btn_recommencer)
         layout_barre.addWidget(btn_quitter)
-
 
         # Layout global
         layout_global = QVBoxLayout()
