@@ -14,7 +14,7 @@ from meteo import MeteoManager
 class MainGameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.en_pause = False
+        self.paused = False
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
 
@@ -65,7 +65,7 @@ class MainGameWindow(QMainWindow):
         self.label_stats.setFrameShape(QLabel.Panel)
         self.label_stats.setAlignment(Qt.AlignCenter)
 
-        self.label_message = MarqueeLabel("Rien à signaler")
+        self.label_message = MarqueeLabel("Rien à signaler")  # message défilant
         self.label_message.setFixedHeight(40)
 
         self.label_piste = QLabel("Piste de côté")
@@ -80,6 +80,7 @@ class MainGameWindow(QMainWindow):
         layout_carte.setContentsMargins(0, 0, 0, 0)
         layout_carte.setSpacing(0)
         self.widget_carte = GameWidget()
+
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout_carte.addWidget(self.widget_carte)
         carte_box.setLayout(layout_carte)
@@ -201,6 +202,7 @@ class MainGameWindow(QMainWindow):
         layout_zone_jeu.addLayout(layout_centre, 2)
         layout_zone_jeu.addLayout(layout_gauche, 1)
 
+        # Layout global
         layout_global = QVBoxLayout()
         layout_global.addWidget(barre_haut)
         layout_global.addLayout(layout_zone_jeu)
@@ -214,58 +216,74 @@ class MainGameWindow(QMainWindow):
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
         self.widget_carte.avion_updated.connect(self.update_plane_list_item)
 
-    # ---------- Fonctions de couleur ----------
-    def lerp_color(self, c1, c2, t):
-        r = int(c1[0] + (c2[0] - c1[0]) * t)
-        g = int(c1[1] + (c2[1] - c1[1]) * t)
-        b = int(c1[2] + (c2[2] - c1[2]) * t)
-        return (r, g, b)
 
-    def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
-        """
-        Met à jour une QProgressBar avec couleur dynamique et texte lisible.
-        Le chunk est en dégradé, et le texte reste lisible grâce à un léger contour.
-        """
-        # Clamp value
-        value = max(0, min(value, maximum))
-        bar.setMaximum(maximum)
-        bar.setValue(value)
+    def toggle_pause(self):
+        self.paused = not self.paused
+        self.widget_carte.set_paused(self.paused)
 
-        # Calcul couleur du chunk selon spectre
-        t = value / maximum
-        n = len(spectrum) - 1
-        idx = min(int(t * n), n - 1)
-        t_local = (t * n) - idx
-        r = int(spectrum[idx][0] + (spectrum[idx + 1][0] - spectrum[idx][0]) * t_local)
-        g = int(spectrum[idx][1] + (spectrum[idx + 1][1] - spectrum[idx][1]) * t_local)
-        b = int(spectrum[idx][2] + (spectrum[idx + 1][2] - spectrum[idx][2]) * t_local)
+        from collision_meteo import CollisionManager
+        CollisionManager.paused = self.paused
+        if hasattr(self.meteo_manager, 'set_paused'):
+            self.meteo_manager.set_paused(self.paused)
+        if self.paused:
+            self.btn_pause.setText("Reprendre")
+        else:
+            self.btn_pause.setText("Pause")
 
-        # Choix de la couleur du texte : blanc ou noir selon luminosité du chunk
-        brightness = (r * 0.299 + g * 0.587 + b * 0.114)
-        text_color = "white" if brightness < 160 else "black"
+        # ---------- Fonctions de couleur ----------
+        def lerp_color(self, c1, c2, t):
+            r = int(c1[0] + (c2[0] - c1[0]) * t)
+            g = int(c1[1] + (c2[1] - c1[1]) * t)
+            b = int(c1[2] + (c2[2] - c1[2]) * t)
+            return (r, g, b)
 
-        # Style de la barre avec texte lisible
-        bar.setStyleSheet(f"""
-        QProgressBar {{
-            border: 2px solid #444;
-            border-radius: 10px;
-            background: #222;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: {text_color};
-            height: 50px;
-        }}
-        QProgressBar::chunk {{
-            border-radius: 10px;
-            margin: 2px;
-            background-color: rgb({r},{g},{b});
-        }}
-        """)
+        def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
+            """
+            Met à jour une QProgressBar avec couleur dynamique et texte lisible.
+            Le chunk est en dégradé, et le texte reste lisible grâce à un léger contour.
+            """
+            # Clamp value
+            value = max(0, min(value, maximum))
+            bar.setMaximum(maximum)
+            bar.setValue(value)
+
+            # Calcul couleur du chunk selon spectre
+            t = value / maximum
+            n = len(spectrum) - 1
+            idx = min(int(t * n), n - 1)
+            t_local = (t * n) - idx
+            r = int(spectrum[idx][0] + (spectrum[idx + 1][0] - spectrum[idx][0]) * t_local)
+            g = int(spectrum[idx][1] + (spectrum[idx + 1][1] - spectrum[idx][1]) * t_local)
+            b = int(spectrum[idx][2] + (spectrum[idx + 1][2] - spectrum[idx][2]) * t_local)
+
+            # Choix de la couleur du texte : blanc ou noir selon luminosité du chunk
+            brightness = (r * 0.299 + g * 0.587 + b * 0.114)
+            text_color = "white" if brightness < 160 else "black"
+
+            # Style de la barre avec texte lisible
+            bar.setStyleSheet(f"""
+            QProgressBar {{
+                border: 2px solid #444;
+                border-radius: 10px;
+                background: #222;
+                text-align: center;
+                font-size: 18px;
+                font-weight: bold;
+                color: {text_color};
+                height: 50px;
+            }}
+            QProgressBar::chunk {{
+                border-radius: 10px;
+                margin: 2px;
+                background-color: rgb({r},{g},{b});
+            }}
+            """)
 
     # ---------- Mise à jour instantanée de la liste ----------
     def update_plane_list_item(self, plane):
+        """Met à jour la liste des avions et supprime après 5s d'arrêt."""
         if plane not in self.widget_carte.planes:
+            # Supprime de la liste si présent
             for i in range(self.liste_avions.count()):
                 item = self.liste_avions.item(i)
                 if item.data(Qt.UserRole) == plane:
@@ -277,6 +295,7 @@ class MainGameWindow(QMainWindow):
                 self.bar_fuel.setValue(0)
             return
 
+        # Sinon, met à jour ou ajoute l’avion dans la liste
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole) == plane:
