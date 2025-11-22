@@ -78,3 +78,8 @@ class MeteoManager:
     def get_evenements_actifs(self):
         """Renvoie une liste de tuples (rect, type) pour collision/évitement"""
         return [(e["rect"], e["type"]) for e in self.evenements_actifs]
+
+    def verifier_collisions(self, planes, selected_plane):
+        evenements = self.get_evenements_actifs()
+        from collision_meteo import CollisionManager
+        CollisionManager.check_collision_et_evitement(planes, selected_plane, evenements)
