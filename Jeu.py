@@ -230,54 +230,54 @@ class MainGameWindow(QMainWindow):
         else:
             self.btn_pause.setText("Pause")
 
-        # ---------- Fonctions de couleur ----------
-        def lerp_color(self, c1, c2, t):
-            r = int(c1[0] + (c2[0] - c1[0]) * t)
-            g = int(c1[1] + (c2[1] - c1[1]) * t)
-            b = int(c1[2] + (c2[2] - c1[2]) * t)
-            return (r, g, b)
+    # ---------- Fonctions de couleur ----------
+    def lerp_color(self, c1, c2, t):
+        r = int(c1[0] + (c2[0] - c1[0]) * t)
+        g = int(c1[1] + (c2[1] - c1[1]) * t)
+        b = int(c1[2] + (c2[2] - c1[2]) * t)
+        return (r, g, b)
 
-        def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
-            """
-            Met à jour une QProgressBar avec couleur dynamique et texte lisible.
-            Le chunk est en dégradé, et le texte reste lisible grâce à un léger contour.
-            """
-            # Clamp value
-            value = max(0, min(value, maximum))
-            bar.setMaximum(maximum)
-            bar.setValue(value)
+    def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
+        """
+        Met à jour une QProgressBar avec couleur dynamique et texte lisible.
+        Le chunk est en dégradé, et le texte reste lisible grâce à un léger contour.
+        """
+        # Clamp value
+        value = max(0, min(value, maximum))
+        bar.setMaximum(maximum)
+        bar.setValue(value)
 
-            # Calcul couleur du chunk selon spectre
-            t = value / maximum
-            n = len(spectrum) - 1
-            idx = min(int(t * n), n - 1)
-            t_local = (t * n) - idx
-            r = int(spectrum[idx][0] + (spectrum[idx + 1][0] - spectrum[idx][0]) * t_local)
-            g = int(spectrum[idx][1] + (spectrum[idx + 1][1] - spectrum[idx][1]) * t_local)
-            b = int(spectrum[idx][2] + (spectrum[idx + 1][2] - spectrum[idx][2]) * t_local)
+        # Calcul couleur du chunk selon spectre
+        t = value / maximum
+        n = len(spectrum) - 1
+        idx = min(int(t * n), n - 1)
+        t_local = (t * n) - idx
+        r = int(spectrum[idx][0] + (spectrum[idx + 1][0] - spectrum[idx][0]) * t_local)
+        g = int(spectrum[idx][1] + (spectrum[idx + 1][1] - spectrum[idx][1]) * t_local)
+        b = int(spectrum[idx][2] + (spectrum[idx + 1][2] - spectrum[idx][2]) * t_local)
 
-            # Choix de la couleur du texte : blanc ou noir selon luminosité du chunk
-            brightness = (r * 0.299 + g * 0.587 + b * 0.114)
-            text_color = "white" if brightness < 160 else "black"
+        # Choix de la couleur du texte : blanc ou noir selon luminosité du chunk
+        brightness = (r * 0.299 + g * 0.587 + b * 0.114)
+        text_color = "white" if brightness < 160 else "black"
 
-            # Style de la barre avec texte lisible
-            bar.setStyleSheet(f"""
-            QProgressBar {{
-                border: 2px solid #444;
-                border-radius: 10px;
-                background: #222;
-                text-align: center;
-                font-size: 18px;
-                font-weight: bold;
-                color: {text_color};
-                height: 50px;
-            }}
-            QProgressBar::chunk {{
-                border-radius: 10px;
-                margin: 2px;
-                background-color: rgb({r},{g},{b});
-            }}
-            """)
+        # Style de la barre avec texte lisible
+        bar.setStyleSheet(f"""
+        QProgressBar {{
+            border: 2px solid #444;
+            border-radius: 10px;
+            background: #222;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: {text_color};
+            height: 50px;
+        }}
+        QProgressBar::chunk {{
+            border-radius: 10px;
+            margin: 2px;
+            background-color: rgb({r},{g},{b});
+        }}
+        """)
 
     # ---------- Mise à jour instantanée de la liste ----------
     def update_plane_list_item(self, plane):
