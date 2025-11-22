@@ -6,7 +6,7 @@ class LandingView(QLabel):
     def __init__(self):
         super().__init__()
         self.setAlignment(Qt.AlignCenter)
-        self.setScaledContents(False)  # on ne force pas le QLabel à étirer n'importe comment
+        self.setScaledContents(True)  # on ne force pas le QLabel à étirer n'importe comment
         self.current_pixmap = QPixmap("Images/zone_attente_atterrissage.png")
         self.setPixmap(self.current_pixmap)
 
@@ -19,18 +19,14 @@ class LandingView(QLabel):
             self.current_pixmap = QPixmap("Images/zone_attente_atterrissage.png")
         else:
             self.current_pixmap = QPixmap("Images/zone_atterrissage_avion.png")
-        self.update_pixmap()
+        self.setPixmap(self.current_pixmap)
 
     def resizeEvent(self, event):
-        self.update_pixmap()
-        super().resizeEvent(event)
-
-    def update_pixmap(self):
+        """Redimensionner l'image pour qu'elle remplisse le QLabel"""
         if self.current_pixmap:
-            # Redimensionne l'image pour qu'elle tienne dans le QLabel, en gardant le ratio
-            scaled = self.current_pixmap.scaled(
+            self.setPixmap(self.current_pixmap.scaled(
                 self.width(), self.height(),
-                Qt.KeepAspectRatio,
+                Qt.IgnoreAspectRatio,  # on ignore le ratio pour remplir
                 Qt.SmoothTransformation
-            )
-            self.setPixmap(scaled)
+            ))
+        super().resizeEvent(event)
