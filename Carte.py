@@ -134,12 +134,11 @@ class GameWidget(QWidget):
         self.spawn_timer.start(delay)
 
     def random_plane_data(self):
-        nom = f"Avion {len(self.planes)+1}"
         altitude = random.randint(1000, 12000)
         vitesse = random.randint(200, 900)
         fuel = random.randint(10, 100)
         cap = random.randint(0, 359)
-        return Avions(nom, altitude, vitesse, fuel, cap)
+        return Avions(None, altitude, vitesse, fuel, cap)
 
     def add_plane(self):
         x = random.randint(50, max(50, self.width() - 50))
