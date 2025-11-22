@@ -9,7 +9,7 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from Carte import GameWidget
 from message_defilant import MarqueeLabel
 from meteo import MeteoManager
-
+from landing import LandingView
 
 class MainGameWindow(QMainWindow):
     def __init__(self):
@@ -68,9 +68,7 @@ class MainGameWindow(QMainWindow):
         self.label_message = MarqueeLabel("Rien à signaler")  # message défilant
         self.label_message.setFixedHeight(40)
 
-        self.label_piste = QLabel("Piste de côté")
-        self.label_piste.setFrameShape(QLabel.Panel)
-        self.label_piste.setAlignment(Qt.AlignCenter)
+        self.landing_view = LandingView()
 
         # Carte
         carte_box = QGroupBox()
@@ -211,7 +209,7 @@ class MainGameWindow(QMainWindow):
         layout_centre = QVBoxLayout()
         layout_centre.addWidget(carte_box, 5)
         layout_centre.addWidget(self.label_message, 1)
-        layout_centre.addWidget(self.label_piste, 5)
+        layout_centre.addWidget(self.landing_view, 5)
 
         layout_droite = QVBoxLayout()
         layout_droite.addWidget(self.label_stats)
@@ -355,17 +353,29 @@ class MainGameWindow(QMainWindow):
         if current:
             plane = current.data(Qt.UserRole)
             self.widget_carte.selected_plane = plane
+            self.landing_view.set_selected_plane(plane)
             self.widget_carte.update()
             self.update_plane_list_item(plane)
+        else:
+            # Aucun avion sélectionné → image de base
+            self.landing_view.set_selected_plane(None)
 
     # ---------- Sélection carte -> liste ----------
     def on_carte_avion_selected(self, avion):
         if avion is None:
+            # Aucun avion sélectionné → remettre les barres à zéro
             self.bar_altitude.setValue(0)
             self.bar_vitesse.setValue(0)
             self.bar_fuel.setValue(0)
+            # Image de base dans la vue d'atterrissage
+            self.landing_view.set_selected_plane(None)
             return
+
+        # Avion sélectionné → mettre à jour liste et landing view
         self.update_plane_list_item(avion)
+        self.landing_view.set_selected_plane(avion)
+
+        # Synchroniser la sélection dans la liste
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole).avion == avion:
