@@ -13,7 +13,7 @@ from meteo import MeteoManager
 class MainGameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        self.en_pause = False
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
 
@@ -36,6 +36,8 @@ class MainGameWindow(QMainWindow):
         layout_barre.addStretch(1)
 
         btn_pause = QPushButton("Pause")
+        btn_pause.clicked.connect(self.toggle_pause)
+        self.btn_pause = btn_pause
         btn_recommencer = QPushButton("Recommencer")
         btn_quitter = QPushButton("Quitter")
         btn_quitter.clicked.connect(self.retour_menu)
@@ -170,6 +172,21 @@ class MainGameWindow(QMainWindow):
         self.liste_avions.currentItemChanged.connect(self.on_liste_avion_selected)
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
         self.widget_carte.avion_updated.connect(self.update_plane_list_item)
+
+    def toggle_pause(self):
+        self.en_pause = not self.en_pause
+
+        if self.en_pause:
+            self.widget_carte.timer.stop()  # Arrête le timer d'animation du jeu
+            print("Jeu en pause")
+        else:
+            self.widget_carte.timer.start()  # Relance le timer d'animation du jeu
+            print("Jeu repris")
+
+        if self.en_pause:
+            self.btn_pause.setText("Reprendre")
+        else:
+            self.btn_pause.setText("Pause")
 
     # ---------- Mise à jour instantanée de la liste ----------
     def update_plane_list_item(self, plane):
