@@ -2,8 +2,11 @@ import math
 from PySide6.QtCore import QRectF
 
 class CollisionManager:
+    paused = False
     @staticmethod
     def check_collision_et_evitement(planes, selected_plane, evenements):
+        if CollisionManager.paused:
+            return
         """
         planes : liste de MovingPlane
         selected_plane : l'avion sélectionné ou None
@@ -40,7 +43,7 @@ class CollisionManager:
                     dx = p.pos.x() - center_evt.x()
                     dy = p.pos.y() - center_evt.y()
 
-                    # ⚡ Évite division par zéro si l'avion est exactement au centre
+                    # Évite division par zéro si l'avion est exactement au centre
                     if dx == 0 and dy == 0:
                         dx, dy = 1, 0
 

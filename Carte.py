@@ -129,6 +129,18 @@ class GameWidget(QWidget):
         self.spawn_timer.timeout.connect(self.spawn_plane)
         self.set_random_spawn_time()
 
+    def set_paused(self, paused: bool):
+        if paused:
+            self.timer.stop()
+            self.spawn_timer.stop()
+            if hasattr(self, 'meteo_manager') and self.meteo_manager is not None:
+                self.meteo_manager.pause()
+        else:
+            self.timer.start()
+            self.set_random_spawn_time()  # pour relancer spawn_timer avec délai aléatoire
+            if hasattr(self, 'meteo_manager') and self.meteo_manager is not None:
+                self.meteo_manager.resume()
+
     def set_random_spawn_time(self):
         delay = random.randint(5000, 10000)
         self.spawn_timer.start(delay)
