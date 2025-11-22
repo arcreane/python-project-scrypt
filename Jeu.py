@@ -1,15 +1,15 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
-    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem,
+    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar
 )
-from PySide6.QtWidgets import QProgressBar
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QPainter, QColor, QPen
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from Carte import GameWidget
 from message_defilant import MarqueeLabel
 from meteo import MeteoManager
+from landing import LandingView
 
 
 # ---------- QProgressBar avec contour de texte ----------
@@ -31,7 +31,7 @@ class ContouredProgressBar(QProgressBar):
         # Contour noir
         pen = QPen(QColor(0, 0, 0))
         painter.setPen(pen)
-        offsets = [(-1,-1),(1,-1),(-1,1),(1,1)]
+        offsets = [(-1, -1), (1, -1), (-1, 1), (1, 1)]
         for dx, dy in offsets:
             painter.drawText(rect.translated(dx, dy), Qt.AlignCenter, text)
 
@@ -99,9 +99,7 @@ class MainGameWindow(QMainWindow):
         self.label_message = MarqueeLabel("Rien à signaler")
         self.label_message.setFixedHeight(40)
 
-        self.label_piste = QLabel("Piste de côté")
-        self.label_piste.setFrameShape(QLabel.Panel)
-        self.label_piste.setAlignment(Qt.AlignCenter)
+        self.landing_view = LandingView()
 
         # Carte
         carte_box = QGroupBox()
@@ -156,6 +154,7 @@ class MainGameWindow(QMainWindow):
         btn_gauche.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         btn_droite.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
+        # Connexion des boutons
         btn_monter.clicked.connect(self.widget_carte.monter_selected)
         btn_descendre.clicked.connect(self.widget_carte.descendre_selected)
         btn_gauche.clicked.connect(self.widget_carte.gauche_selected)
@@ -174,6 +173,7 @@ class MainGameWindow(QMainWindow):
         self.bar_vitesse.setFormat("Vitesse : %v km/h")
         self.bar_fuel.setFormat("Carburant : %v %")
 
+        # Layouts
         layout_controles.addWidget(self.bar_altitude)
         layout_controles.addWidget(self.bar_vitesse)
         layout_controles.addWidget(self.bar_fuel)
@@ -209,7 +209,7 @@ class MainGameWindow(QMainWindow):
         layout_centre = QVBoxLayout()
         layout_centre.addWidget(carte_box, 5)
         layout_centre.addWidget(self.label_message, 1)
-        layout_centre.addWidget(self.label_piste, 5)
+        layout_centre.addWidget(self.landing_view, 5)
 
         layout_droite = QVBoxLayout()
         layout_droite.addWidget(self.label_stats)
@@ -228,7 +228,7 @@ class MainGameWindow(QMainWindow):
         central_widget.setLayout(layout_global)
         self.setCentralWidget(central_widget)
 
-        # ---------- Connections ----------
+        # ---------- Connections liste <-> carte ----------
         self.liste_avions.currentItemChanged.connect(self.on_liste_avion_selected)
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
         self.widget_carte.avion_updated.connect(self.update_plane_list_item)
@@ -289,23 +289,27 @@ class MainGameWindow(QMainWindow):
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole) == plane:
-                item.setText(f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°")
+                item.setText(
+                    f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°")
                 break
         else:
-            item = QListWidgetItem(f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°")
+            item = QListWidgetItem(
+                f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°")
             item.setData(Qt.UserRole, plane)
             self.liste_avions.addItem(item)
 
         if plane is self.widget_carte.selected_plane:
-            self.update_progress_bar_spectrum(self.bar_altitude, plane.avion.altitude, 12000, [(80,0,120),(120,200,255)])
-            vitesse_spectrum = [(128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)]
+            self.update_progress_bar_spectrum(self.bar_altitude, plane.avion.altitude, 12000,
+                                              [(80, 0, 120), (120, 200, 255)])
+            vitesse_spectrum = [(128, 0, 128), (0, 0, 255), (0, 255, 0), (255, 255, 0), (255, 128, 0), (255, 0, 0)]
             self.update_progress_bar_spectrum(self.bar_vitesse, plane.avion.vitesse, 900, vitesse_spectrum)
-            self.update_progress_bar_spectrum(self.bar_fuel, plane.avion.fuel, 100, [(255,0,0),(255,255,0)])
+            self.update_progress_bar_spectrum(self.bar_fuel, plane.avion.fuel, 100, [(255, 0, 0), (255, 255, 0)])
 
     def on_liste_avion_selected(self, current, previous):
         if current:
             plane = current.data(Qt.UserRole)
             self.widget_carte.selected_plane = plane
+            self.landing_view.set_selected_plane(plane)
             self.widget_carte.update()
             self.update_plane_list_item(plane)
 
@@ -314,8 +318,12 @@ class MainGameWindow(QMainWindow):
             self.bar_altitude.setValue(0)
             self.bar_vitesse.setValue(0)
             self.bar_fuel.setValue(0)
+            # Image de base dans la vue d'atterrissage
+            self.landing_view.set_selected_plane(None)
             return
+        # Avion sélectionné → mettre à jour liste et landing view
         self.update_plane_list_item(avion)
+        self.landing_view.set_selected_plane(avion)
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole).avion == avion:
