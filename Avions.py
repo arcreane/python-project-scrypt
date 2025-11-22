@@ -1,7 +1,11 @@
 class Avions:
     nb_avions = 0
-    def __init__(self, nom, altitude, vitesse, fuel, cap):
-        self.nom = nom
+    global_id = 1
+    def __init__(self, nom=None, altitude=None, vitesse=None, fuel=None, cap=None):
+        self.id = Avions.global_id
+        Avions.global_id += 1
+
+        self.nom = nom if nom else f"Avion {self.id}"
         self.altitude = altitude
         self.vitesse = vitesse
         self.fuel = fuel
