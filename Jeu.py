@@ -230,6 +230,16 @@ class MainGameWindow(QMainWindow):
         else:
             self.btn_pause.setText("Pause")
 
+    # ---------- Pause ----------
+    def toggle_pause(self):
+        self.en_pause = not self.en_pause
+        if self.en_pause:
+            self.widget_carte.timer.stop()
+            self.btn_pause.setText("Reprendre")
+        else:
+            self.widget_carte.timer.start()
+            self.btn_pause.setText("Pause")
+
     # ---------- Fonctions de couleur ----------
     def lerp_color(self, c1, c2, t):
         r = int(c1[0] + (c2[0] - c1[0]) * t)
@@ -351,16 +361,6 @@ class MainGameWindow(QMainWindow):
             if item.data(Qt.UserRole).avion == avion:
                 self.liste_avions.setCurrentItem(item)
                 return
-
-    # ---------- Pause ----------
-    def toggle_pause(self):
-        self.en_pause = not self.en_pause
-        if self.en_pause:
-            self.widget_carte.timer.stop()
-            self.btn_pause.setText("Reprendre")
-        else:
-            self.widget_carte.timer.start()
-            self.btn_pause.setText("Pause")
 
     # ---------- Retour au menu ----------
     def retour_menu(self):
