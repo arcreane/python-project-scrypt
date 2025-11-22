@@ -103,7 +103,7 @@ class GameWidget(QWidget):
         from PySide6.QtGui import QPixmap
 
         self.background = QPixmap(
-            r"C:\Users\melin\PycharmProjects\python-project-scrypt\Images\ecran_fond_vue_de_haut.png"
+            r"Images/ecran_fond_vue_de_haut.png"
         )
 
         if self.background.isNull():
