@@ -31,7 +31,7 @@ class MeteoManager:
 
     def demarrer_timer_aleatoire(self):
         # Prochain événement entre 5 et 10 secondes
-        interval = random.randint(5_000, 10_000)
+        interval = random.randint(10_000, 15_000)
         self.timer.start(interval)
 
     def lancer_evenement(self):
@@ -60,7 +60,7 @@ class MeteoManager:
         self.evenements_actifs.append({"type": evenement, "label": label, "rect": rect})
 
         # Supprimer après 5 à 10 secondes
-        duree = random.randint(5_000, 10_000)
+        duree = random.randint(10_000, 20_000)
 
         def supprimer_event():
             # Retirer l'événement actif et supprimer le label
