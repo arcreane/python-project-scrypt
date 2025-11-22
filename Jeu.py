@@ -137,8 +137,7 @@ class MainGameWindow(QMainWindow):
         self.player.play()
 
         # ---------- Boutons de contrôle ----------
-        from esthetisme_boutons_jeu import ImageButton
-        btn_monter = ImageButton("Monter", "Images/monter.png")
+        btn_monter = QPushButton("Monter")
         btn_descendre = QPushButton("Descendre")
         btn_gauche = QPushButton("Gauche")
         btn_droite = QPushButton("Droite")
@@ -173,6 +172,19 @@ class MainGameWindow(QMainWindow):
         self.bar_altitude.setFormat("Altitude : %v m")
         self.bar_vitesse.setFormat("Vitesse : %v km/h")
         self.bar_fuel.setFormat("Carburant : %v %")
+
+        # Valeurs initiales et chunks visibles dès le début
+        self.bar_altitude.setMaximum(12000)
+        self.bar_altitude.setValue(0)
+        self.update_progress_bar_spectrum(self.bar_altitude, 0, 12000, [(80, 0, 120), (120, 200, 255)])
+
+        self.bar_vitesse.setMaximum(900)
+        self.bar_vitesse.setValue(0)
+        self.update_progress_bar_spectrum(self.bar_vitesse, 0, 900, [(128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)])
+
+        self.bar_fuel.setMaximum(100)
+        self.bar_fuel.setValue(0)
+        self.update_progress_bar_spectrum(self.bar_fuel, 0, 100, [(255,0,0),(255,255,0)])
 
         # Layouts
         layout_controles.addWidget(self.bar_altitude)
@@ -319,10 +331,8 @@ class MainGameWindow(QMainWindow):
             self.bar_altitude.setValue(0)
             self.bar_vitesse.setValue(0)
             self.bar_fuel.setValue(0)
-            # Image de base dans la vue d'atterrissage
             self.landing_view.set_selected_plane(None)
             return
-        # Avion sélectionné → mettre à jour liste et landing view
         self.update_plane_list_item(avion)
         self.landing_view.set_selected_plane(avion)
         for i in range(self.liste_avions.count()):
