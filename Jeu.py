@@ -75,6 +75,7 @@ class MainGameWindow(QMainWindow):
         layout_carte.setContentsMargins(0, 0, 0, 0)
         layout_carte.setSpacing(0)
         self.widget_carte = GameWidget()
+
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout_carte.addWidget(self.widget_carte)
         carte_box.setLayout(layout_carte)

@@ -92,6 +92,16 @@ class GameWidget(QWidget):
 
     def __init__(self):
         super().__init__()
+        from PySide6.QtGui import QPixmap
+
+        self.background = QPixmap(
+            r"C:\Users\melin\PycharmProjects\python-project-scrypt\Images\ecran_fond_vue_de_haut.png"
+        )
+
+        if self.background.isNull():
+            print("ERREUR : image de fond NON chargée")
+        else:
+            print("Fond OK")
         self.setWindowTitle("Avions - Triangles orientés")
         self.resize(800, 600)
 
@@ -178,6 +188,17 @@ class GameWidget(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
+
+        # ---- DESSIN DU FOND ----
+        if not self.background.isNull():
+            target_rect = self.rect()
+            scaled = self.background.scaled(
+                target_rect.size(),
+                Qt.IgnoreAspectRatio,
+                Qt.SmoothTransformation
+            )
+            painter.drawPixmap(0, 0, scaled)
+
         painter.setRenderHint(QPainter.Antialiasing)
         for plane in self.planes:
             self.draw_triangle(painter, plane)
