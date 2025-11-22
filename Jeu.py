@@ -72,7 +72,9 @@ class MainGameWindow(QMainWindow):
         self.label_piste.setAlignment(Qt.AlignCenter)
 
         # Carte
-        carte_box = QGroupBox("Carte")
+        carte_box = QGroupBox()
+        carte_box.setFlat(True)
+        carte_box.setStyleSheet("QGroupBox { border: none; }")
         layout_carte = QVBoxLayout()
         layout_carte.setContentsMargins(0, 0, 0, 0)
         layout_carte.setSpacing(0)
