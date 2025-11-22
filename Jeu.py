@@ -116,10 +116,16 @@ class MainGameWindow(QMainWindow):
         btn_atterrir = QPushButton("Atterrir")
         btn_attente = QPushButton("Attente")
         btn_urgence = QPushButton("Urgence")
+        btn_accelerer = QPushButton("Accélérer")
+        btn_ralentir = QPushButton("Ralentir")
 
         for b in [btn_monter, btn_descendre, btn_gauche, btn_droite,
-                  btn_atterrir, btn_attente, btn_urgence]:
+                  btn_atterrir, btn_attente, btn_urgence, btn_accelerer, btn_ralentir]:
             b.setFixedHeight(60)
+
+        # Faire que Gauche et Droite prennent la même largeur et soient côte à côte
+        btn_gauche.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        btn_droite.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         # Connexion des boutons
         btn_monter.clicked.connect(self.widget_carte.monter_selected)
@@ -177,10 +183,24 @@ class MainGameWindow(QMainWindow):
 
         group_instructions = QGroupBox("Instructions")
         layout_instructions = QVBoxLayout()
+        layout_instructions.setContentsMargins(0, 0, 0, 0)
+        layout_instructions.setSpacing(5)
+
+        # Monter et Descendre en colonne
         layout_instructions.addWidget(btn_monter)
         layout_instructions.addWidget(btn_descendre)
-        layout_instructions.addWidget(btn_gauche)
-        layout_instructions.addWidget(btn_droite)
+
+        # Gauche et Droite côte à côte
+        layout_gauche_droite = QHBoxLayout()
+        layout_gauche_droite.setSpacing(5)
+        layout_gauche_droite.addWidget(btn_gauche)
+        layout_gauche_droite.addWidget(btn_droite)
+        layout_instructions.addLayout(layout_gauche_droite)
+
+        # Les autres boutons en colonne
+        layout_instructions.addWidget(btn_accelerer)
+        layout_instructions.addWidget(btn_ralentir)
+
         group_instructions.setLayout(layout_instructions)
 
         # ---------- Layouts principaux ----------

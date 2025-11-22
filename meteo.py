@@ -6,7 +6,8 @@ from PySide6.QtGui import QPixmap
 class MeteoManager:
     def __init__(self, parent_widget):
         self.parent_widget = parent_widget
-        self.paused = False
+        self.paused = False  # booléen pause
+
         self.evenements = {
             "typhon": "images/typhon.png",
             "givre": "images/givre.png",
@@ -18,11 +19,10 @@ class MeteoManager:
             "typhon": (100, 100),
             "givre": (80, 80),
             "foudre": (80, 120),
-            "volcan": (120,120)
+            "volcan": (120, 120)
         }
 
         self.evenements_actifs = []
-        self.paused = False  # <-- nouveau booléen pause
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.lancer_evenement)
@@ -56,6 +56,7 @@ class MeteoManager:
 
         duree = random.randint(10_000, 20_000)
 
+        # Timer suppression avec fonction liée à l'instance
         timer_suppression = QTimer()
         timer_suppression.setSingleShot(True)
         timer_suppression.timeout.connect(lambda lbl=label: self.supprimer_event(lbl))
@@ -72,35 +73,20 @@ class MeteoManager:
 
     def supprimer_event(self, label):
         if self.paused:
-            # Si on est en pause, ne pas supprimer, juste revenir
+            # Si pause, on ne supprime pas l'événement
             return
 
-        # Supprime l'événement actif et le label
+        # Supprimer l'événement actif et le label
         self.evenements_actifs = [e for e in self.evenements_actifs if e["label"] != label]
         label.deleteLater()
 
     def set_paused(self, paused: bool):
         self.paused = paused
         if paused:
-            self.timer.stop()  # Stop les nouveaux événements
-            # Pas besoin d'arrêter les timers suppression
+            self.timer.stop()  # Arrêter la création de nouveaux événements
+            # On ne stoppe PAS les timers de suppression pour garder les événements visibles
         else:
-            self.demarrer_timer_aleatoire()
-        def supprimer_event():
-            self.evenements_actifs = [e for e in self.evenements_actifs if e["label"] != label]
-            label.deleteLater()
-
-        timer_suppression = QTimer()
-        timer_suppression.setSingleShot(True)
-        timer_suppression.timeout.connect(supprimer_event)
-        timer_suppression.start(duree)
-
-        self.evenements_actifs.append({
-            "type": evenement,
-            "label": label,
-            "rect": rect,
-            "timer_suppression": timer_suppression
-        })
+            self.demarrer_timer_aleatoire()  # Relancer le timer pour les événements
 
     def get_evenements_actifs(self):
         return [(e["rect"], e["type"]) for e in self.evenements_actifs]
