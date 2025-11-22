@@ -1,9 +1,10 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
-    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem
+    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar,
 )
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QPalette, QColor
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from Carte import GameWidget
 from message_defilant import MarqueeLabel
@@ -64,7 +65,7 @@ class MainGameWindow(QMainWindow):
         self.label_stats.setFrameShape(QLabel.Panel)
         self.label_stats.setAlignment(Qt.AlignCenter)
 
-        self.label_message = MarqueeLabel("Rien à signaler")  # message défilant
+        self.label_message = MarqueeLabel("Rien à signaler")
         self.label_message.setFixedHeight(40)
 
         self.label_piste = QLabel("Piste de côté")
@@ -79,7 +80,6 @@ class MainGameWindow(QMainWindow):
         layout_carte.setContentsMargins(0, 0, 0, 0)
         layout_carte.setSpacing(0)
         self.widget_carte = GameWidget()
-
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout_carte.addWidget(self.widget_carte)
         carte_box.setLayout(layout_carte)
@@ -129,6 +129,46 @@ class MainGameWindow(QMainWindow):
         group_controles = QGroupBox("Contrôles")
         layout_controles = QVBoxLayout()
         layout_controles.addStretch(1)
+
+        # --- Barres d’information avion sélectionné ---
+        self.bar_altitude = QProgressBar()
+        self.bar_vitesse = QProgressBar()
+        self.bar_fuel = QProgressBar()
+
+        self.bar_altitude.setFormat("Altitude : %v m")
+        self.bar_vitesse.setFormat("Vitesse : %v km/h")
+        self.bar_fuel.setFormat("Carburant : %v %")
+
+        # Taille épaisse
+        self.bar_altitude.setFixedHeight(50)
+        self.bar_vitesse.setFixedHeight(50)
+        self.bar_fuel.setFixedHeight(50)
+
+        # Style classique (la couleur du chunk sera dynamique)
+        bar_style = """
+        QProgressBar {
+            border: 2px solid #444;
+            border-radius: 10px;
+            background: #222;
+            text-align: center;
+            font-size: 18px;
+            color: white;
+            height: 50px;
+        }
+        QProgressBar::chunk {
+            border-radius: 10px;
+            margin: 2px;
+            background-color: #5BC074;
+        }
+        """
+        self.bar_altitude.setStyleSheet(bar_style)
+        self.bar_vitesse.setStyleSheet(bar_style)
+        self.bar_fuel.setStyleSheet(bar_style)
+
+        layout_controles.addWidget(self.bar_altitude)
+        layout_controles.addWidget(self.bar_vitesse)
+        layout_controles.addWidget(self.bar_fuel)
+
         layout_controles.addWidget(btn_urgence)
         layout_controles.addWidget(btn_attente)
         layout_controles.addWidget(btn_atterrir)
@@ -161,7 +201,6 @@ class MainGameWindow(QMainWindow):
         layout_zone_jeu.addLayout(layout_centre, 2)
         layout_zone_jeu.addLayout(layout_gauche, 1)
 
-        # Layout global
         layout_global = QVBoxLayout()
         layout_global.addWidget(barre_haut)
         layout_global.addLayout(layout_zone_jeu)
@@ -175,52 +214,102 @@ class MainGameWindow(QMainWindow):
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
         self.widget_carte.avion_updated.connect(self.update_plane_list_item)
 
-    def toggle_pause(self):
-        self.en_pause = not self.en_pause
+    # ---------- Fonctions de couleur ----------
+    def lerp_color(self, c1, c2, t):
+        r = int(c1[0] + (c2[0] - c1[0]) * t)
+        g = int(c1[1] + (c2[1] - c1[1]) * t)
+        b = int(c1[2] + (c2[2] - c1[2]) * t)
+        return (r, g, b)
 
-        if self.en_pause:
-            self.widget_carte.timer.stop()  # Arrête le timer d'animation du jeu
-            print("Jeu en pause")
-        else:
-            self.widget_carte.timer.start()  # Relance le timer d'animation du jeu
-            print("Jeu repris")
+    def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
+        """
+        Met à jour une QProgressBar avec couleur dynamique et texte lisible.
+        Le chunk est en dégradé, et le texte reste lisible grâce à un léger contour.
+        """
+        # Clamp value
+        value = max(0, min(value, maximum))
+        bar.setMaximum(maximum)
+        bar.setValue(value)
 
-        if self.en_pause:
-            self.btn_pause.setText("Reprendre")
-        else:
-            self.btn_pause.setText("Pause")
+        # Calcul couleur du chunk selon spectre
+        t = value / maximum
+        n = len(spectrum) - 1
+        idx = min(int(t * n), n - 1)
+        t_local = (t * n) - idx
+        r = int(spectrum[idx][0] + (spectrum[idx + 1][0] - spectrum[idx][0]) * t_local)
+        g = int(spectrum[idx][1] + (spectrum[idx + 1][1] - spectrum[idx][1]) * t_local)
+        b = int(spectrum[idx][2] + (spectrum[idx + 1][2] - spectrum[idx][2]) * t_local)
+
+        # Choix de la couleur du texte : blanc ou noir selon luminosité du chunk
+        brightness = (r * 0.299 + g * 0.587 + b * 0.114)
+        text_color = "white" if brightness < 160 else "black"
+
+        # Style de la barre avec texte lisible
+        bar.setStyleSheet(f"""
+        QProgressBar {{
+            border: 2px solid #444;
+            border-radius: 10px;
+            background: #222;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: {text_color};
+            height: 50px;
+        }}
+        QProgressBar::chunk {{
+            border-radius: 10px;
+            margin: 2px;
+            background-color: rgb({r},{g},{b});
+        }}
+        """)
 
     # ---------- Mise à jour instantanée de la liste ----------
     def update_plane_list_item(self, plane):
-        """Met à jour la liste des avions et supprime après 5s d'arrêt."""
         if plane not in self.widget_carte.planes:
-            # Supprime de la liste si présent
             for i in range(self.liste_avions.count()):
                 item = self.liste_avions.item(i)
-                p = item.data(Qt.UserRole)
-                if p == plane:
+                if item.data(Qt.UserRole) == plane:
                     self.liste_avions.takeItem(i)
-                    return
+                    break
+            if self.widget_carte.selected_plane == plane:
+                self.bar_altitude.setValue(0)
+                self.bar_vitesse.setValue(0)
+                self.bar_fuel.setValue(0)
             return
 
-        # Sinon, met à jour ou ajoute l’avion dans la liste
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
-            p = item.data(Qt.UserRole)
-            if p == plane:
+            if item.data(Qt.UserRole) == plane:
                 item.setText(
-                    f"{p.avion.nom} - Alt: {p.avion.altitude} m - Vit: {p.avion.vitesse} km/h - "
-                    f"Fuel: {p.avion.fuel:.1f}% - Cap: {p.avion.cap:.1f}°"
+                    f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - "
+                    f"Vit: {plane.avion.vitesse} km/h - "
+                    f"Fuel: {plane.avion.fuel:.1f}% - "
+                    f"Cap: {plane.avion.cap:.1f}°"
                 )
-                return
+                break
+        else:
+            item = QListWidgetItem(
+                f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - "
+                f"Vit: {plane.avion.vitesse} km/h - "
+                f"Fuel: {plane.avion.fuel:.1f}% - "
+                f"Cap: {plane.avion.cap:.1f}°"
+            )
+            item.setData(Qt.UserRole, plane)
+            self.liste_avions.addItem(item)
 
-        # Si absent, l'ajouter
-        item = QListWidgetItem(
-            f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - "
-            f"Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°"
-        )
-        item.setData(Qt.UserRole, plane)
-        self.liste_avions.addItem(item)
+        if plane is self.widget_carte.selected_plane:
+            # Altitude : violet foncé → bleu clair
+            self.update_progress_bar_spectrum(self.bar_altitude, plane.avion.altitude, 12000,
+                                              [(80,0,120),(120,200,255)])
+            # Vitesse : spectre complet
+            vitesse_spectrum = [
+                (128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)
+            ]
+            self.update_progress_bar_spectrum(self.bar_vitesse, plane.avion.vitesse, 900,
+                                              vitesse_spectrum)
+            # Fuel : rouge → jaune
+            self.update_progress_bar_spectrum(self.bar_fuel, plane.avion.fuel, 100,
+                                              [(255,0,0),(255,255,0)])
 
     # ---------- Sélection liste -> carte ----------
     def on_liste_avion_selected(self, current, previous):
@@ -228,15 +317,31 @@ class MainGameWindow(QMainWindow):
             plane = current.data(Qt.UserRole)
             self.widget_carte.selected_plane = plane
             self.widget_carte.update()
+            self.update_plane_list_item(plane)
 
     # ---------- Sélection carte -> liste ----------
     def on_carte_avion_selected(self, avion):
+        if avion is None:
+            self.bar_altitude.setValue(0)
+            self.bar_vitesse.setValue(0)
+            self.bar_fuel.setValue(0)
+            return
+        self.update_plane_list_item(avion)
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole).avion == avion:
                 self.liste_avions.setCurrentItem(item)
                 return
-        self.liste_avions.setCurrentItem(None)
+
+    # ---------- Pause ----------
+    def toggle_pause(self):
+        self.en_pause = not self.en_pause
+        if self.en_pause:
+            self.widget_carte.timer.stop()
+            self.btn_pause.setText("Reprendre")
+        else:
+            self.widget_carte.timer.start()
+            self.btn_pause.setText("Pause")
 
     # ---------- Retour au menu ----------
     def retour_menu(self):
