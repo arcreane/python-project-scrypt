@@ -139,7 +139,8 @@ class MainGameWindow(QMainWindow):
         self.player.play()
 
         # ---------- Boutons de contrôle ----------
-        btn_monter = QPushButton("Monter")
+        from esthetisme_boutons_jeu import ImageButton
+        btn_monter = ImageButton("Monter", "Images/monter.png")
         btn_descendre = QPushButton("Descendre")
         btn_gauche = QPushButton("Gauche")
         btn_droite = QPushButton("Droite")
