@@ -11,14 +11,16 @@ class MeteoManager:
         self.evenements = {
             "typhon": "images/typhon.png",
             "givre": "images/givre.png",
-            "foudre": "images/foudre.png"
+            "foudre": "images/foudre.png",
+            "volcan": "images/volcan.png"
         }
 
         # Tailles spécifiques pour chaque icône
         self.tailles = {
             "typhon": (100, 100),
             "givre": (80, 80),
-            "foudre": (80, 120)
+            "foudre": (80, 120),
+            "volcan": (120,120)
         }
 
         # Liste des événements actifs
