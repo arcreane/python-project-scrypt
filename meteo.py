@@ -31,7 +31,7 @@ class MeteoManager:
 
     def demarrer_timer_aleatoire(self):
         # Prochain événement entre 5 et 10 secondes
-        interval = random.randint(5_000, 10_000)
+        interval = random.randint(10_000, 15_000)
         self.timer.start(interval)
 
     def lancer_evenement(self):
@@ -60,7 +60,7 @@ class MeteoManager:
         self.evenements_actifs.append({"type": evenement, "label": label, "rect": rect})
 
         # Supprimer après 5 à 10 secondes
-        duree = random.randint(5_000, 10_000)
+        duree = random.randint(10_000, 20_000)
 
         def supprimer_event():
             # Retirer l'événement actif et supprimer le label
@@ -78,3 +78,8 @@ class MeteoManager:
     def get_evenements_actifs(self):
         """Renvoie une liste de tuples (rect, type) pour collision/évitement"""
         return [(e["rect"], e["type"]) for e in self.evenements_actifs]
+
+    def verifier_collisions(self, planes, selected_plane):
+        evenements = self.get_evenements_actifs()
+        from collision_meteo import CollisionManager
+        CollisionManager.check_collision_et_evitement(planes, selected_plane, evenements)

@@ -84,6 +84,14 @@ class MovingPlane:
         if self.vx != 0 or self.vy != 0:
             self.avion.cap = (math.degrees(math.atan2(self.vy, self.vx)) + 90) % 360
 
+    def update_velocity_from_cap(self):
+        """Met à jour vx et vy selon le cap actuel"""
+        rad = math.radians(self.avion.cap - 90)
+        speed = self.avion.vitesse / 250.0
+        self.vx = math.cos(rad) * speed
+        self.vy = math.sin(rad) * speed
+        if self.vx != 0 or self.vy != 0:
+            self.last_angle = math.atan2(self.vy, self.vx)
 
 class GameWidget(QWidget):
     """Widget de la carte / zone de jeu."""
@@ -149,11 +157,15 @@ class GameWidget(QWidget):
         w, h = self.width(), self.height()
         for p in self.planes[:]:
             prev_vx, prev_vy = p.vx, p.vy
+
+            if hasattr(self, 'meteo_manager'):
+                self.meteo_manager.verifier_collisions(self.planes, self.selected_plane)
+
             p.move(w, h)
             p.update_fuel()
             self.avion_updated.emit(p)
 
-            # Détecter que l’avion vient de s’arrêter
+        # Détecter que l’avion vient de s’arrêter
             if (prev_vx != 0 or prev_vy != 0) and p.vx == 0 and p.vy == 0:
                 if p not in self.stop_timers:
                     timer = QTimer(self)
