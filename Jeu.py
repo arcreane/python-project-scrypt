@@ -17,6 +17,8 @@ class MainGameWindow(QMainWindow):
         self.paused = False
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocus()
 
         # ---------- Barre du haut ----------
         barre_haut = QWidget()
@@ -387,6 +389,31 @@ class MainGameWindow(QMainWindow):
             self.label_message.setText("ATTENTION – dangers météorologiques!")
         else:
             self.label_message.setText("Rien à signaler")
+
+    def keyPressEvent(self, event):
+        print("Touche détectée :", event.key())
+
+        if self.widget_carte.selected_plane is None:
+            return
+
+        plane = self.widget_carte.selected_plane
+
+        if event.key() == Qt.Key_Left:
+            plane.avion.gauche()
+            self.widget_carte._update_velocity_from_cap(plane)
+
+        elif event.key() == Qt.Key_Right:
+            plane.avion.droite()
+            self.widget_carte._update_velocity_from_cap(plane)
+
+        elif event.key() == Qt.Key_Up:
+            plane.avion.monter()
+
+        elif event.key() == Qt.Key_Down:
+            plane.avion.descendre()
+
+        self.widget_carte.update()
+        self.update_plane_list_item(plane)
 
 
 if __name__ == "__main__":
