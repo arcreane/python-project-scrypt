@@ -273,11 +273,19 @@ class GameWidget(QWidget):
             self.update()
 
     def urgence_selected(self):
-        self.mode_highlight="urgence"
+        if self.mode_highlight == "urgence":
+            # Si Urgence déjà actif → revenir au mode normal
+            self.mode_highlight = None
+        else:
+            self.mode_highlight = "urgence"
         self.update()
 
     def attente_selected(self):
-        self.mode_highlight="attente"
+        if self.mode_highlight == "attente":
+            # Si Attente déjà actif → revenir au mode normal
+            self.mode_highlight = None
+        else:
+            self.mode_highlight = "attente"
         self.update()
 
     def reset_highlight(self):
