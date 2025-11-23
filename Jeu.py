@@ -74,6 +74,13 @@ class MainGameWindow(QMainWindow):
         self.label_stats.setFrameShape(QLabel.Panel)
         self.label_stats.setAlignment(Qt.AlignCenter)
 
+        # Modifier la police pour qu'elle soit plus grosse et en gras
+        font_stats = self.label_stats.font()
+        font_stats.setPointSize(24)  # taille plus grande
+        font_stats.setBold(True)
+        self.label_stats.setFont(font_stats)
+        self.label_stats.setStyleSheet("color: #A3C1DA;")
+
         self.label_message = MarqueeLabel("Rien à signaler")  # message défilant
         self.label_message.setFixedHeight(40)
 
