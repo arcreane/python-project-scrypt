@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, Q
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtWidgets import QMessageBox, QHBoxLayout
 from Jeu import MainGameWindow
-
+from InfoWindow import InfoWindow
 
 class Window(QWidget):
     def __init__(self):
@@ -99,12 +99,8 @@ class Window(QWidget):
         self.close()
 
     def show_infos(self):
-        msg = QMessageBox(self)
-        msg.setWindowTitle("À propos")
-        msg.setText(
-            "🔧 Projet réalisé par le groupe Scrypt :\n\n• Mélina LEJEUNE\n• Lise TUONG\n• Chloé VINOTTI\n\n✨ SkyLink Simulation ✨ 2PH2")
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.exec()
+        info = InfoWindow(self)
+        info.exec()
 
 
 if __name__ == "__main__":
