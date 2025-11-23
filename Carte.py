@@ -39,8 +39,8 @@ class MovingPlane:
             self.pos.setY(h); self.vy *= -1; bounced = True
 
         if bounced and (self.vx != 0 or self.vy != 0):
+            self.avion.cap = (math.degrees(math.atan2(self.vy, self.vx)) + 90) % 360
             self.last_angle = math.atan2(self.vy, self.vx)
-            self.update_avion_cap()
 
     def update_fuel(self):
         conso_sec = self.avion.vitesse / 500.0
@@ -57,7 +57,7 @@ class MovingPlane:
         self.blink += 1
         if self.vx != 0 or self.vy != 0:
             self.last_angle = math.atan2(self.vy, self.vx)
-            self.update_avion_cap()
+            self.avion.cap = (math.degrees(self.last_angle) + 90) % 360
 
     def angle(self):
         if self.vx != 0 or self.vy != 0:
@@ -208,17 +208,26 @@ class GameWidget(QWidget):
         else:
             pixmap = self.plane_normal
 
-        # Rotation centrée
-        transform = QTransform()
-        transform.translate(plane.pos.x(), plane.pos.y())
-        transform.rotate(plane.avion.cap)
-        transform.translate(-pixmap.width() / 2, -pixmap.height() / 2)
-        painter.setTransform(transform)
-        painter.drawPixmap(0, 0, pixmap)
+        vx, vy = plane.vx, plane.vy
 
-        # Reset transformation pour le prochain dessin
-        painter.resetTransform()
+        if vx == 0 and vy == 0:
+            angle_deg = 0  # Avion à l'arrêt
+        else:
+            # Angle réel de déplacement
+            rad = math.atan2(vy, vx)
+            angle_deg = math.degrees(rad)
 
+            # Limite la rotation à ±45°
+            angle_deg = max(-45, min(45, angle_deg))
+
+        painter.save()
+        painter.translate(plane.pos.x(), plane.pos.y())
+
+        # Le sprite regarde vers la droite, donc pas de marche arrière
+        painter.rotate(angle_deg)
+
+        painter.drawPixmap(-pixmap.width() // 2, -pixmap.height() // 2, pixmap)
+        painter.restore()
 
     def paintEvent(self, event):
         painter = QPainter(self)
