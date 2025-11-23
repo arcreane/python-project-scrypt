@@ -132,7 +132,7 @@ class MainGameWindow(QMainWindow):
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.player.setAudioOutput(self.audio_output)
-        self.player.setSource("Musiques/musique_de_fond_interface_principale.mp3")
+        self.player.setSource("Musiques/Musique_jeu.mp3")
         self.player.setLoops(QMediaPlayer.Infinite)
         self.player.play()
 

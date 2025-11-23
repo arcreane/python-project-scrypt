@@ -7,7 +7,7 @@ class LandingView(QLabel):
         super().__init__()
         self.setAlignment(Qt.AlignCenter)
         self.setScaledContents(True)  # on ne force pas le QLabel à étirer n'importe comment
-        self.current_pixmap = QPixmap("Images/zone_attente_atterrissage.png")
+        self.current_pixmap = QPixmap("Images/Piste_attente.png")
         self.setPixmap(self.current_pixmap)
 
         # **Important** : laisse le layout décider de la taille, mais ne force pas le widget
@@ -16,9 +16,9 @@ class LandingView(QLabel):
 
     def set_selected_plane(self, plane):
         if plane is None:
-            self.current_pixmap = QPixmap("Images/zone_attente_atterrissage.png")
+            self.current_pixmap = QPixmap("Images/Piste_attente.png")
         else:
-            self.current_pixmap = QPixmap("Images/zone_atterrissage_avion.png")
+            self.current_pixmap = QPixmap("Images/Piste_avion.png")
         self.setPixmap(self.current_pixmap)
 
     def resizeEvent(self, event):

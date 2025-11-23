@@ -57,7 +57,7 @@ class Window(QWidget):
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.player.setAudioOutput(self.audio_output)
-        self.player.setSource(QUrl.fromLocalFile("Musiques/musique_interface_entree.mp3"))
+        self.player.setSource(QUrl.fromLocalFile("Musiques/Musique_accueil.mp3"))
         self.audio_output.setVolume(0.5)
         self.player.play()
 
@@ -66,7 +66,7 @@ class Window(QWidget):
         if not hasattr(self, "background") or self.background is None:
             return super().showEvent(event)
 
-        pixmap = QPixmap(r"Images/ecran_fond_interface.png")
+        pixmap = QPixmap(r"Images/Fond_accueil.png")
         if not pixmap.isNull():
             pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatioByExpanding)
             self.background.setPixmap(pixmap)
@@ -81,7 +81,7 @@ class Window(QWidget):
         if not hasattr(self, "background") or self.background is None:
             return super().resizeEvent(event)
 
-        pixmap = QPixmap("Images/ecran_fond_interface.png")
+        pixmap = QPixmap("Images/Fond_accueil.png")
         if not pixmap.isNull():
             pixmap = pixmap.scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatioByExpanding)
             self.background.setPixmap(pixmap)

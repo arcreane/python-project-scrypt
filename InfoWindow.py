@@ -13,7 +13,7 @@ class InfoWindow(QDialog):
         # --- Image en fond via QLabel ---
         self.background_label = QLabel(self)
         self.background_label.setPixmap(
-            QPixmap("Images/fond_infos_accueil.png").scaled(
+            QPixmap("Images/Fond_infos_accueil.png").scaled(
                 self.size(),
                 Qt.KeepAspectRatioByExpanding,
                 Qt.SmoothTransformation

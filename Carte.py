@@ -112,7 +112,7 @@ class GameWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.background = QPixmap("Images/ecran_fond_vue_de_haut.png")
+        self.background = QPixmap("Images/Fond_carte.png")
         self.setWindowTitle("Avions - Triangles orientés")
         self.resize(800,600)
 
