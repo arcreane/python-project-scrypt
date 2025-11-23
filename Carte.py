@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt, QTimer, QPointF, Signal
 from PySide6.QtGui import QPainter, QColor, QFont, QPolygonF, QPen
 from PySide6.QtWidgets import QWidget
 from Avions import Avions
+from PySide6.QtGui import QTransform, QPixmap, QPainter
 
 
 class MovingPlane:
@@ -18,7 +19,7 @@ class MovingPlane:
         self.vx = math.cos(rad) * speed
         self.vy = math.sin(rad) * speed
 
-        self.size = 20
+        self.size = 40
         self.blink = 0
         self.last_angle = rad
         self.update_avion_cap()
@@ -102,14 +103,17 @@ class GameWidget(QWidget):
         super().__init__()
         from PySide6.QtGui import QPixmap
 
-        self.background = QPixmap(
-            r"Images/ecran_fond_vue_de_haut.png"
-        )
+        # Chargement des images
+        self.plane_normal = QPixmap("Images/avion_attente.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.plane_selected = QPixmap("Images/avion_selectionne.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.plane_urgent = QPixmap("Images/avion_urgence.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
+        self.background = QPixmap(r"Images/ecran_fond_vue_de_haut.png")
         if self.background.isNull():
             print("ERREUR : image de fond NON chargée")
         else:
             print("Fond OK")
+
         self.setWindowTitle("Avions - Triangles orientés")
         self.resize(800, 600)
 
@@ -195,19 +199,26 @@ class GameWidget(QWidget):
             self.stop_timers.pop(plane)
         self.avion_updated.emit(plane)  # signal vers Jeu.py pour mettre à jour la liste
 
-    def draw_triangle(self, painter, plane: MovingPlane):
-        angle = plane.angle()
-        s = plane.size
-        base = s * 0.6
-        triangle = [QPointF(s, 0), QPointF(-s, base), QPointF(-s, -base)]
+    def draw_plane_image(self, painter, plane: MovingPlane):
+        # Choix de l'image selon état
+        if plane is self.selected_plane:
+            pixmap = self.plane_selected
+        elif plane.avion.fuel < 10:
+            pixmap = self.plane_urgent
+        else:
+            pixmap = self.plane_normal
 
-        rotated = [QPointF(pt.x() * math.cos(angle) - pt.y() * math.sin(angle) + plane.pos.x(),
-                           pt.x() * math.sin(angle) + pt.y() * math.cos(angle) + plane.pos.y())
-                   for pt in triangle]
+        # Rotation centrée
+        transform = QTransform()
+        transform.translate(plane.pos.x(), plane.pos.y())
+        transform.rotate(plane.avion.cap)
+        transform.translate(-pixmap.width() / 2, -pixmap.height() / 2)
+        painter.setTransform(transform)
+        painter.drawPixmap(0, 0, pixmap)
 
-        painter.setBrush(QColor(*plane.get_color()))
-        painter.setPen(QPen(QColor(50, 120, 255), 3) if plane is self.selected_plane else QPen(Qt.black, 1))
-        painter.drawPolygon(QPolygonF(rotated))
+        # Reset transformation pour le prochain dessin
+        painter.resetTransform()
+
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -224,7 +235,7 @@ class GameWidget(QWidget):
 
         painter.setRenderHint(QPainter.Antialiasing)
         for plane in self.planes:
-            self.draw_triangle(painter, plane)
+            self.draw_plane_image(painter, plane)  # <-- ici on utilise l'image
             painter.setPen(Qt.black)
             painter.setFont(QFont("Arial", 10))
             text_y = plane.pos.y() + plane.size + 15
