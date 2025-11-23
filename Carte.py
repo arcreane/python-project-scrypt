@@ -1,11 +1,11 @@
+#Carte.py :
 import sys
 import random
 import math
 from PySide6.QtCore import Qt, QTimer, QPointF, Signal
-from PySide6.QtGui import QPainter, QColor, QFont, QPolygonF, QPen
+from PySide6.QtGui import QPainter, QColor, QFont, QPen, QPixmap, QImage, QTransform
 from PySide6.QtWidgets import QWidget
 from Avions import Avions
-from PySide6.QtGui import QTransform, QPixmap, QPainter
 
 
 class MovingPlane:
@@ -19,14 +19,18 @@ class MovingPlane:
         self.vx = math.cos(rad) * speed
         self.vy = math.sin(rad) * speed
 
-        self.size = 40
+        self.size = 20
+        self.icon = QPixmap("Images/Avion.png")
+        if self.icon.isNull():
+            print("ERREUR : icône avion introuvable")
+        else:
+            # image carrée
+            self.icon = self.icon.scaled(90, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.size = 45
+
         self.blink = 0
         self.last_angle = rad
         self.update_avion_cap()
-
-        self.blink_urgence = False
-        self.blink_attente = False
-        self.blink_selectionne = False
 
     def move(self, w, h):
         self.pos.setX(self.pos.x() + self.vx)
@@ -43,8 +47,8 @@ class MovingPlane:
             self.pos.setY(h); self.vy *= -1; bounced = True
 
         if bounced and (self.vx != 0 or self.vy != 0):
-            self.avion.cap = (math.degrees(math.atan2(self.vy, self.vx)) + 90) % 360
             self.last_angle = math.atan2(self.vy, self.vx)
+            self.update_avion_cap()
 
     def update_fuel(self):
         conso_sec = self.avion.vitesse / 500.0
@@ -61,7 +65,7 @@ class MovingPlane:
         self.blink += 1
         if self.vx != 0 or self.vy != 0:
             self.last_angle = math.atan2(self.vy, self.vx)
-            self.avion.cap = (math.degrees(self.last_angle) + 90) % 360
+            self.update_avion_cap()
 
     def angle(self):
         if self.vx != 0 or self.vy != 0:
@@ -107,22 +111,14 @@ class GameWidget(QWidget):
         super().__init__()
         from PySide6.QtGui import QPixmap
 
-        # Chargement des images
-        self.plane_normal = QPixmap("Images/avion_attente.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.plane_selected = QPixmap("Images/avion_selectionne.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.plane_urgent = QPixmap("Images/avion_urgence.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-        self.plane_urgent_blink = QPixmap("Images/avion_urgence_clignotement.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.plane_normal_blink = QPixmap("Images/avion_attente_clignotement.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.plane_selected_blink = QPixmap("Images/avion_selectionne_clignotement.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-        self.background = QPixmap(r"Images/ecran_fond_vue_de_haut.png")
+        self.background = QPixmap(
+            r"Images/ecran_fond_vue_de_haut.png"
+        )
 
         if self.background.isNull():
             print("ERREUR : image de fond NON chargée")
         else:
             print("Fond OK")
-
         self.setWindowTitle("Avions - Triangles orientés")
         self.resize(800, 600)
 
@@ -208,38 +204,46 @@ class GameWidget(QWidget):
             self.stop_timers.pop(plane)
         self.avion_updated.emit(plane)  # signal vers Jeu.py pour mettre à jour la liste
 
-    def draw_plane_image(self, painter, plane: MovingPlane):
+    def draw_plane_icon(self, painter, plane: MovingPlane):
+        """Affiche l’avion comme une icône orientée, colorée et clignotante."""
+
+        angle_deg = math.degrees(plane.angle()) + 90
+        icon = plane.icon
+
+        if icon.isNull():
+            return  # icône non trouvée
+
+        # ---- 1) Rotation de l'icône ----
+        transform = QTransform()
+        transform.rotate(angle_deg)
+        rotated = icon.transformed(transform, Qt.SmoothTransformation)
+
+        # ---- 2) Coloration dynamique (fuel / blink) ----
+        r, g, b = plane.get_color()
+        color = QColor(r, g, b)
+        if (plane.blink // 10) % 2 == 0 and plane.avion.fuel <= 5:
+            color.setAlpha(160)  # clignotement critique
+
+        tinted = QImage(rotated.size(), QImage.Format_ARGB32)
+        tinted.fill(Qt.transparent)
+
+        pt = QPainter(tinted)
+        pt.setCompositionMode(QPainter.CompositionMode_Source)
+        pt.drawPixmap(0, 0, rotated)
+        pt.setCompositionMode(QPainter.CompositionMode_SourceIn)
+        pt.fillRect(tinted.rect(), color)
+        pt.end()
+
+        # ---- 3) Affichage sur la carte ----
+        x = plane.pos.x() - tinted.width() / 2
+        y = plane.pos.y() - tinted.height() / 2
+        painter.drawImage(x, y, tinted)
+
+        # ---- 4) Contour bleu si sélectionné ----
         if plane is self.selected_plane:
-            pixmap = self.plane_selected if not plane.blink_selectionne else self.plane_selected_blink
-        else:
-            if plane.avion.fuel < 10:
-                pixmap = self.plane_urgent_blink if plane.blink_urgence else self.plane_urgent
-            else:
-                pixmap = self.plane_normal_blink if plane.blink_attente else self.plane_normal
-
-        vx, vy = plane.vx, plane.vy
-
-        # Cas avion immobile
-        if vx == 0 and vy == 0:
-            angle_deg = 0
-            flip = False
-        else:
-            # on inverse vy pour corriger le sens vertical
-            angle_rad = math.atan2(-vy, vx)
-            angle_deg = math.degrees(angle_rad)
-            flip = vx > 0  # inversion horizontale si avion vers la droite
-
-        # Limite l’inclinaison à ±45°
-        delta = max(-45, min(45, angle_deg))
-
-        painter.save()
-        painter.translate(plane.pos.x(), plane.pos.y())
-
-        if flip:
-            painter.scale(-1, 1)  # inversion horizontale
-        painter.rotate(delta)
-        painter.drawPixmap(-pixmap.width() // 2, -pixmap.height() // 2, pixmap)
-        painter.restore()
+            painter.setPen(QPen(QColor(50, 120, 255), 3))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawEllipse(plane.pos, tinted.width() / 2 + 3, tinted.height() / 2 + 3)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -256,7 +260,7 @@ class GameWidget(QWidget):
 
         painter.setRenderHint(QPainter.Antialiasing)
         for plane in self.planes:
-            self.draw_plane_image(painter, plane)  # <-- ici on utilise l'image
+            self.draw_plane_icon(painter, plane)
             painter.setPen(Qt.black)
             painter.setFont(QFont("Arial", 10))
             text_y = plane.pos.y() + plane.size + 15
