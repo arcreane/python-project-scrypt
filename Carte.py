@@ -1,5 +1,3 @@
-#Carte.py :
-import sys
 import random
 import math
 from PySide6.QtCore import Qt, QTimer, QPointF, Signal

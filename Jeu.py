@@ -1,11 +1,10 @@
-#Jeu.py :
 import sys
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
     QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QPainter, QColor, QPen
+from PySide6.QtGui import QPainter, QColor, QPen
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from Carte import GameWidget
 from message_defilant import MarqueeLabel

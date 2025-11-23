@@ -1,11 +1,10 @@
-#Accueil.py :
 import sys
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QLabel
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtWidgets import QMessageBox, QHBoxLayout
+from PySide6.QtWidgets import QHBoxLayout
 from Jeu import MainGameWindow
 from InfoWindow import InfoWindow
 
