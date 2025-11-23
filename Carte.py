@@ -74,14 +74,18 @@ class MovingPlane:
 
     def get_color(self):
         fuel = self.avion.fuel
-        normal_color = (255, 80, 80)
-        warning_color = (255, 150, 0)
-        critical_color = (255, 255, 255)
+        normal_color = (50, 120, 255)
+        warning_color = (255, 0, 0)
+        critical_color = (0, 0, 0)
 
         if self.vx == 0 and self.vy == 0:
-            if fuel > 20: return normal_color
-            elif fuel > 5: return warning_color
-            else: return critical_color
+            # avion posé = aucun clignotement
+            if fuel > 20:
+                return normal_color
+            elif fuel > 5:
+                return warning_color
+            else:
+                return critical_color
 
         if fuel > 20: color = normal_color
         elif fuel > 5: color = warning_color if (self.blink // 30) % 2 == 0 else normal_color
@@ -221,8 +225,10 @@ class GameWidget(QWidget):
         # ---- 2) Coloration dynamique (fuel / blink) ----
         r, g, b = plane.get_color()
         color = QColor(r, g, b)
-        if (plane.blink // 10) % 2 == 0 and plane.avion.fuel <= 5:
-            color.setAlpha(160)  # clignotement critique
+        # Désactive le clignotement quand l’avion est arrêté
+        if (plane.vx != 0 or plane.vy != 0) and plane.avion.fuel <= 5:
+            if (plane.blink // 10) % 2 == 0:
+                color.setAlpha(160)
 
         tinted = QImage(rotated.size(), QImage.Format_ARGB32)
         tinted.fill(Qt.transparent)
@@ -243,7 +249,8 @@ class GameWidget(QWidget):
         if plane is self.selected_plane:
             painter.setPen(QPen(QColor(50, 120, 255), 3))
             painter.setBrush(Qt.NoBrush)
-            painter.drawEllipse(plane.pos, tinted.width() / 2 + 3, tinted.height() / 2 + 3)
+            radius = plane.size
+            painter.drawEllipse(plane.pos, radius, radius)
 
     def paintEvent(self, event):
         painter = QPainter(self)
