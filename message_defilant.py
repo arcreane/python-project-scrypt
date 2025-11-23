@@ -7,12 +7,14 @@ class MarqueeLabel(QLabel):
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
         self.setAlignment(Qt.AlignVCenter)
-        self.offset = 0
+
+        # Position de départ (à droite du widget)
+        self.offset = self.width()
 
         # Timer pour le défilement
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.scrollText)
-        self.timer.start(50)  # vitesse du défilement
+        self.timer.start(30)  # vitesse du défilement
 
         # Style du texte
         font = QtGui.QFont("Consolas", 20, QtGui.QFont.Bold)
@@ -20,13 +22,14 @@ class MarqueeLabel(QLabel):
         self.setStyleSheet("background-color: black; color: purple;")
 
     def scrollText(self):
-        # Défilement vers la droite
-        self.offset += 2
         text_width = self.fontMetrics().horizontalAdvance(self.text())
 
-        # Dès que le texte sort complètement à droite, on le remet à gauche
-        if self.offset > self.width():
-            self.offset = -text_width
+        # Défilement vers la gauche
+        self.offset -= 2
+
+        # Si le texte est entièrement sorti à gauche, on remet au départ à droite
+        if self.offset < -text_width:
+            self.offset = self.width()
 
         self.update()
 
@@ -34,6 +37,8 @@ class MarqueeLabel(QLabel):
         painter = QtGui.QPainter(self)
         painter.setFont(self.font())
         painter.setPen(QtGui.QColor("purple"))
-        painter.drawText(self.offset,
-                         int(self.height()/2 + self.fontMetrics().ascent()/2),
-                         self.text())
+        painter.drawText(
+            self.offset,
+            int(self.height()/2 + self.fontMetrics().ascent()/2),
+            self.text()
+        )

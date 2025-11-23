@@ -1,45 +1,14 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
-    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar
+    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QPainter, QColor, QPen
+from PySide6.QtGui import QFont, QPalette, QColor
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from Carte import GameWidget
 from message_defilant import MarqueeLabel
 from meteo import MeteoManager
-from landing import LandingView
-from clignotement_legende import clignoter_avions_urgence, clignoter_avions_attente
-
-# ---------- QProgressBar avec contour de texte ----------
-class ContouredProgressBar(QProgressBar):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setTextVisible(True)
-        self.setMinimumHeight(50)
-
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.setFont(self.font())
-
-        text = self.text()
-        rect = self.rect()
-
-        # Contour noir
-        pen = QPen(QColor(0, 0, 0))
-        painter.setPen(pen)
-        offsets = [(-1, -1), (1, -1), (-1, 1), (1, 1)]
-        for dx, dy in offsets:
-            painter.drawText(rect.translated(dx, dy), Qt.AlignCenter, text)
-
-        # Texte blanc au-dessus
-        pen = QPen(QColor(255, 255, 255))
-        painter.setPen(pen)
-        painter.drawText(rect, Qt.AlignCenter, text)
-        painter.end()
 
 
 class MainGameWindow(QMainWindow):
@@ -96,10 +65,12 @@ class MainGameWindow(QMainWindow):
         self.label_stats.setFrameShape(QLabel.Panel)
         self.label_stats.setAlignment(Qt.AlignCenter)
 
-        self.label_message = MarqueeLabel("Rien à signaler")
+        self.label_message = MarqueeLabel("Rien à signaler")  # message défilant
         self.label_message.setFixedHeight(40)
 
-        self.landing_view = LandingView()
+        self.label_piste = QLabel("Piste de côté")
+        self.label_piste.setFrameShape(QLabel.Panel)
+        self.label_piste.setAlignment(Qt.AlignCenter)
 
         # Carte
         carte_box = QGroupBox()
@@ -109,10 +80,12 @@ class MainGameWindow(QMainWindow):
         layout_carte.setContentsMargins(0, 0, 0, 0)
         layout_carte.setSpacing(0)
         self.widget_carte = GameWidget()
+
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout_carte.addWidget(self.widget_carte)
         carte_box.setLayout(layout_carte)
         self.meteo_manager = MeteoManager(self.widget_carte)
+        self.meteo_manager.evenements_changed.connect(self.mettre_a_jour_message_defilant)
 
         # ---------- Liste des avions ----------
         self.liste_avions = QListWidget()
@@ -147,18 +120,11 @@ class MainGameWindow(QMainWindow):
         btn_accelerer = QPushButton("Accélérer")
         btn_ralentir = QPushButton("Ralentir")
 
-        # Style boutons urgence et attente
-        btn_urgence.setStyleSheet(
-            "QPushButton { background-color: #F00528; color: white; border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; } QPushButton:hover { background-color: #FF6F6F; }")
-        btn_attente.setStyleSheet(
-            "QPushButton { background-color: #00D4F0; color: white; border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; } QPushButton:hover { background-color: #A0D0FF; }")
-        btn_atterrir.setStyleSheet(
-            "QPushButton { background-color: #04D131; color: white; border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; } QPushButton:hover { background-color: #A0D0FF; }")
-
         for b in [btn_monter, btn_descendre, btn_gauche, btn_droite,
                   btn_atterrir, btn_attente, btn_urgence, btn_accelerer, btn_ralentir]:
             b.setFixedHeight(60)
 
+        # Faire que Gauche et Droite prennent la même largeur et soient côte à côte
         btn_gauche.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         btn_droite.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -167,36 +133,46 @@ class MainGameWindow(QMainWindow):
         btn_descendre.clicked.connect(self.widget_carte.descendre_selected)
         btn_gauche.clicked.connect(self.widget_carte.gauche_selected)
         btn_droite.clicked.connect(self.widget_carte.droite_selected)
-        btn_urgence.clicked.connect(lambda: clignoter_avions_urgence(self.widget_carte))
-        btn_attente.clicked.connect(lambda: clignoter_avions_attente(self.widget_carte))
 
         group_controles = QGroupBox("Contrôles")
         layout_controles = QVBoxLayout()
         layout_controles.addStretch(1)
 
-        # ---------- Barres avec contour ----------
-        self.bar_altitude = ContouredProgressBar()
-        self.bar_vitesse = ContouredProgressBar()
-        self.bar_fuel = ContouredProgressBar()
+        # --- Barres d’information avion sélectionné ---
+        self.bar_altitude = QProgressBar()
+        self.bar_vitesse = QProgressBar()
+        self.bar_fuel = QProgressBar()
 
         self.bar_altitude.setFormat("Altitude : %v m")
         self.bar_vitesse.setFormat("Vitesse : %v km/h")
         self.bar_fuel.setFormat("Carburant : %v %")
 
-        # Valeurs initiales et chunks visibles dès le début
-        self.bar_altitude.setMaximum(12000)
-        self.bar_altitude.setValue(0)
-        self.update_progress_bar_spectrum(self.bar_altitude, 0, 12000, [(80, 0, 120), (120, 200, 255)])
+        # Taille épaisse
+        self.bar_altitude.setFixedHeight(50)
+        self.bar_vitesse.setFixedHeight(50)
+        self.bar_fuel.setFixedHeight(50)
 
-        self.bar_vitesse.setMaximum(900)
-        self.bar_vitesse.setValue(0)
-        self.update_progress_bar_spectrum(self.bar_vitesse, 0, 900, [(128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)])
+        # Style classique (la couleur du chunk sera dynamique)
+        bar_style = """
+        QProgressBar {
+            border: 2px solid #444;
+            border-radius: 10px;
+            background: #222;
+            text-align: center;
+            font-size: 18px;
+            color: white;
+            height: 50px;
+        }
+        QProgressBar::chunk {
+            border-radius: 10px;
+            margin: 2px;
+            background-color: #5BC074;
+        }
+        """
+        self.bar_altitude.setStyleSheet(bar_style)
+        self.bar_vitesse.setStyleSheet(bar_style)
+        self.bar_fuel.setStyleSheet(bar_style)
 
-        self.bar_fuel.setMaximum(100)
-        self.bar_fuel.setValue(0)
-        self.update_progress_bar_spectrum(self.bar_fuel, 0, 100, [(255,0,0),(255,255,0)])
-
-        # Layouts
         layout_controles.addWidget(self.bar_altitude)
         layout_controles.addWidget(self.bar_vitesse)
         layout_controles.addWidget(self.bar_fuel)
@@ -211,17 +187,21 @@ class MainGameWindow(QMainWindow):
         layout_instructions.setContentsMargins(0, 0, 0, 0)
         layout_instructions.setSpacing(5)
 
+        # Monter et Descendre en colonne
         layout_instructions.addWidget(btn_monter)
         layout_instructions.addWidget(btn_descendre)
 
+        # Gauche et Droite côte à côte
         layout_gauche_droite = QHBoxLayout()
         layout_gauche_droite.setSpacing(5)
         layout_gauche_droite.addWidget(btn_gauche)
         layout_gauche_droite.addWidget(btn_droite)
         layout_instructions.addLayout(layout_gauche_droite)
 
+        # Les autres boutons en colonne
         layout_instructions.addWidget(btn_accelerer)
         layout_instructions.addWidget(btn_ralentir)
+
         group_instructions.setLayout(layout_instructions)
 
         # ---------- Layouts principaux ----------
@@ -232,7 +212,7 @@ class MainGameWindow(QMainWindow):
         layout_centre = QVBoxLayout()
         layout_centre.addWidget(carte_box, 5)
         layout_centre.addWidget(self.label_message, 1)
-        layout_centre.addWidget(self.landing_view, 5)
+        layout_centre.addWidget(self.label_piste, 5)
 
         layout_droite = QVBoxLayout()
         layout_droite.addWidget(self.label_stats)
@@ -243,6 +223,7 @@ class MainGameWindow(QMainWindow):
         layout_zone_jeu.addLayout(layout_centre, 2)
         layout_zone_jeu.addLayout(layout_gauche, 1)
 
+        # Layout global
         layout_global = QVBoxLayout()
         layout_global.addWidget(barre_haut)
         layout_global.addLayout(layout_zone_jeu)
@@ -251,25 +232,43 @@ class MainGameWindow(QMainWindow):
         central_widget.setLayout(layout_global)
         self.setCentralWidget(central_widget)
 
-        # ---------- Connections liste <-> carte ----------
+        # ---------- Connections pour liste <-> carte ----------
         self.liste_avions.currentItemChanged.connect(self.on_liste_avion_selected)
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
         self.widget_carte.avion_updated.connect(self.update_plane_list_item)
 
+
     def toggle_pause(self):
         self.paused = not self.paused
         self.widget_carte.set_paused(self.paused)
+
         from collision_meteo import CollisionManager
         CollisionManager.paused = self.paused
         if hasattr(self.meteo_manager, 'set_paused'):
             self.meteo_manager.set_paused(self.paused)
-        self.btn_pause.setText("Reprendre" if self.paused else "Pause")
+        if self.paused:
+            self.btn_pause.setText("Reprendre")
+        else:
+            self.btn_pause.setText("Pause")
+
+    # ---------- Fonctions de couleur ----------
+    def lerp_color(self, c1, c2, t):
+        r = int(c1[0] + (c2[0] - c1[0]) * t)
+        g = int(c1[1] + (c2[1] - c1[1]) * t)
+        b = int(c1[2] + (c2[2] - c1[2]) * t)
+        return (r, g, b)
 
     def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
+        """
+        Met à jour une QProgressBar avec couleur dynamique et texte lisible.
+        Le chunk est en dégradé, et le texte reste lisible grâce à un léger contour.
+        """
+        # Clamp value
         value = max(0, min(value, maximum))
         bar.setMaximum(maximum)
         bar.setValue(value)
 
+        # Calcul couleur du chunk selon spectre
         t = value / maximum
         n = len(spectrum) - 1
         idx = min(int(t * n), n - 1)
@@ -278,7 +277,11 @@ class MainGameWindow(QMainWindow):
         g = int(spectrum[idx][1] + (spectrum[idx + 1][1] - spectrum[idx][1]) * t_local)
         b = int(spectrum[idx][2] + (spectrum[idx + 1][2] - spectrum[idx][2]) * t_local)
 
-        # Couleur du chunk
+        # Choix de la couleur du texte : blanc ou noir selon luminosité du chunk
+        brightness = (r * 0.299 + g * 0.587 + b * 0.114)
+        text_color = "white" if brightness < 160 else "black"
+
+        # Style de la barre avec texte lisible
         bar.setStyleSheet(f"""
         QProgressBar {{
             border: 2px solid #444;
@@ -287,7 +290,8 @@ class MainGameWindow(QMainWindow):
             text-align: center;
             font-size: 18px;
             font-weight: bold;
-            color: white;
+            color: {text_color};
+            height: 50px;
         }}
         QProgressBar::chunk {{
             border-radius: 10px;
@@ -296,8 +300,11 @@ class MainGameWindow(QMainWindow):
         }}
         """)
 
+    # ---------- Mise à jour instantanée de la liste ----------
     def update_plane_list_item(self, plane):
+        """Met à jour la liste des avions et supprime après 5s d'arrêt."""
         if plane not in self.widget_carte.planes:
+            # Supprime de la liste si présent
             for i in range(self.liste_avions.count()):
                 item = self.liste_avions.item(i)
                 if item.data(Qt.UserRole) == plane:
@@ -309,48 +316,64 @@ class MainGameWindow(QMainWindow):
                 self.bar_fuel.setValue(0)
             return
 
+        # Sinon, met à jour ou ajoute l’avion dans la liste
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole) == plane:
                 item.setText(
-                    f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°")
+                    f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - "
+                    f"Vit: {plane.avion.vitesse} km/h - "
+                    f"Fuel: {plane.avion.fuel:.1f}% - "
+                    f"Cap: {plane.avion.cap:.1f}°"
+                )
                 break
         else:
             item = QListWidgetItem(
-                f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°")
+                f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - "
+                f"Vit: {plane.avion.vitesse} km/h - "
+                f"Fuel: {plane.avion.fuel:.1f}% - "
+                f"Cap: {plane.avion.cap:.1f}°"
+            )
             item.setData(Qt.UserRole, plane)
             self.liste_avions.addItem(item)
 
         if plane is self.widget_carte.selected_plane:
+            # Altitude : violet foncé → bleu clair
             self.update_progress_bar_spectrum(self.bar_altitude, plane.avion.altitude, 12000,
-                                              [(80, 0, 120), (120, 200, 255)])
-            vitesse_spectrum = [(128, 0, 128), (0, 0, 255), (0, 255, 0), (255, 255, 0), (255, 128, 0), (255, 0, 0)]
-            self.update_progress_bar_spectrum(self.bar_vitesse, plane.avion.vitesse, 900, vitesse_spectrum)
-            self.update_progress_bar_spectrum(self.bar_fuel, plane.avion.fuel, 100, [(255, 0, 0), (255, 255, 0)])
+                                              [(80,0,120),(120,200,255)])
+            # Vitesse : spectre complet
+            vitesse_spectrum = [
+                (128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)
+            ]
+            self.update_progress_bar_spectrum(self.bar_vitesse, plane.avion.vitesse, 900,
+                                              vitesse_spectrum)
+            # Fuel : rouge → jaune
+            self.update_progress_bar_spectrum(self.bar_fuel, plane.avion.fuel, 100,
+                                              [(255,0,0),(255,255,0)])
 
+    # ---------- Sélection liste -> carte ----------
     def on_liste_avion_selected(self, current, previous):
         if current:
             plane = current.data(Qt.UserRole)
             self.widget_carte.selected_plane = plane
-            self.landing_view.set_selected_plane(plane)
             self.widget_carte.update()
             self.update_plane_list_item(plane)
 
+    # ---------- Sélection carte -> liste ----------
     def on_carte_avion_selected(self, avion):
         if avion is None:
             self.bar_altitude.setValue(0)
             self.bar_vitesse.setValue(0)
             self.bar_fuel.setValue(0)
-            self.landing_view.set_selected_plane(None)
             return
         self.update_plane_list_item(avion)
-        self.landing_view.set_selected_plane(avion)
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole).avion == avion:
                 self.liste_avions.setCurrentItem(item)
                 return
 
+    # ---------- Retour au menu ----------
     def retour_menu(self):
         if self.player:
             self.player.stop()
@@ -358,6 +381,12 @@ class MainGameWindow(QMainWindow):
         self.menu_window = Window()
         self.menu_window.showFullScreen()
         self.close()
+
+    def mettre_a_jour_message_defilant(self):
+        if len(self.meteo_manager.evenements_actifs) > 0:
+            self.label_message.setText("ATTENTION – dangers météorologiques!")
+        else:
+            self.label_message.setText("Rien à signaler")
 
 
 if __name__ == "__main__":

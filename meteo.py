@@ -1,12 +1,16 @@
+# meteo.py
 import random
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import QTimer, Qt, QRectF
+from PySide6.QtCore import QTimer, Qt, QRectF, Signal, QObject
 from PySide6.QtGui import QPixmap
 
-class MeteoManager:
+class MeteoManager(QObject):
+    evenements_changed = Signal()  # Signal émis quand la liste des événements change
+
     def __init__(self, parent_widget):
+        super().__init__()
         self.parent_widget = parent_widget
-        self.paused = False  # booléen pause
+        self.paused = False
 
         self.evenements = {
             "typhon": "images/typhon.png",
@@ -30,11 +34,13 @@ class MeteoManager:
 
     def demarrer_timer_aleatoire(self):
         if self.paused:
-            return  # ne rien faire si en pause
+            return  # Ne rien faire si en pause
         interval = random.randint(10_000, 15_000)
         self.timer.start(interval)
 
     def lancer_evenement(self):
+        if self.paused:
+            return
         evenement = random.choice(list(self.evenements.keys()))
         image_path = self.evenements[evenement]
 
@@ -56,7 +62,6 @@ class MeteoManager:
 
         duree = random.randint(10_000, 20_000)
 
-        # Timer suppression avec fonction liée à l'instance
         timer_suppression = QTimer()
         timer_suppression.setSingleShot(True)
         timer_suppression.timeout.connect(lambda lbl=label: self.supprimer_event(lbl))
@@ -69,24 +74,24 @@ class MeteoManager:
             "timer_suppression": timer_suppression
         })
 
+        self.evenements_changed.emit()
         self.demarrer_timer_aleatoire()
 
     def supprimer_event(self, label):
         if self.paused:
-            # Si pause, on ne supprime pas l'événement
+            # Ne pas supprimer si pause, garder affiché
             return
-
-        # Supprimer l'événement actif et le label
         self.evenements_actifs = [e for e in self.evenements_actifs if e["label"] != label]
         label.deleteLater()
+        self.evenements_changed.emit()
 
     def set_paused(self, paused: bool):
         self.paused = paused
         if paused:
-            self.timer.stop()  # Arrêter la création de nouveaux événements
-            # On ne stoppe PAS les timers de suppression pour garder les événements visibles
+            self.timer.stop()
+            # Ne pas arrêter timers suppression pour que les événements restent visibles
         else:
-            self.demarrer_timer_aleatoire()  # Relancer le timer pour les événements
+            self.demarrer_timer_aleatoire()
 
     def get_evenements_actifs(self):
         return [(e["rect"], e["type"]) for e in self.evenements_actifs]
