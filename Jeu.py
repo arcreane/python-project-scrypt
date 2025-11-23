@@ -10,7 +10,7 @@ from Carte import GameWidget
 from message_defilant import MarqueeLabel
 from meteo import MeteoManager
 from landing import LandingView
-
+from clignotement_legende import clignoter_avions_urgence, clignoter_avions_attente
 
 # ---------- QProgressBar avec contour de texte ----------
 class ContouredProgressBar(QProgressBar):
@@ -147,6 +147,14 @@ class MainGameWindow(QMainWindow):
         btn_accelerer = QPushButton("Accélérer")
         btn_ralentir = QPushButton("Ralentir")
 
+        # Style boutons urgence et attente
+        btn_urgence.setStyleSheet(
+            "QPushButton { background-color: #F00528; color: white; border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; } QPushButton:hover { background-color: #FF6F6F; }")
+        btn_attente.setStyleSheet(
+            "QPushButton { background-color: #00D4F0; color: white; border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; } QPushButton:hover { background-color: #A0D0FF; }")
+        btn_atterrir.setStyleSheet(
+            "QPushButton { background-color: #04D131; color: white; border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; } QPushButton:hover { background-color: #A0D0FF; }")
+
         for b in [btn_monter, btn_descendre, btn_gauche, btn_droite,
                   btn_atterrir, btn_attente, btn_urgence, btn_accelerer, btn_ralentir]:
             b.setFixedHeight(60)
@@ -159,6 +167,8 @@ class MainGameWindow(QMainWindow):
         btn_descendre.clicked.connect(self.widget_carte.descendre_selected)
         btn_gauche.clicked.connect(self.widget_carte.gauche_selected)
         btn_droite.clicked.connect(self.widget_carte.droite_selected)
+        btn_urgence.clicked.connect(lambda: clignoter_avions_urgence(self.widget_carte))
+        btn_attente.clicked.connect(lambda: clignoter_avions_attente(self.widget_carte))
 
         group_controles = QGroupBox("Contrôles")
         layout_controles = QVBoxLayout()

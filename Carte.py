@@ -24,6 +24,10 @@ class MovingPlane:
         self.last_angle = rad
         self.update_avion_cap()
 
+        self.blink_urgence = False
+        self.blink_attente = False
+        self.blink_selectionne = False
+
     def move(self, w, h):
         self.pos.setX(self.pos.x() + self.vx)
         self.pos.setY(self.pos.y() + self.vy)
@@ -108,7 +112,12 @@ class GameWidget(QWidget):
         self.plane_selected = QPixmap("Images/avion_selectionne.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.plane_urgent = QPixmap("Images/avion_urgence.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
+        self.plane_urgent_blink = QPixmap("Images/avion_urgence_clignotement.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.plane_normal_blink = QPixmap("Images/avion_attente_clignotement.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.plane_selected_blink = QPixmap("Images/avion_selectionne_clignotement.png").scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
         self.background = QPixmap(r"Images/ecran_fond_vue_de_haut.png")
+
         if self.background.isNull():
             print("ERREUR : image de fond NON chargée")
         else:
@@ -200,13 +209,13 @@ class GameWidget(QWidget):
         self.avion_updated.emit(plane)  # signal vers Jeu.py pour mettre à jour la liste
 
     def draw_plane_image(self, painter, plane: MovingPlane):
-        # Choix image
         if plane is self.selected_plane:
-            pixmap = self.plane_selected
-        elif plane.avion.fuel < 10:
-            pixmap = self.plane_urgent
+            pixmap = self.plane_selected if not plane.blink_selectionne else self.plane_selected_blink
         else:
-            pixmap = self.plane_normal
+            if plane.avion.fuel < 10:
+                pixmap = self.plane_urgent_blink if plane.blink_urgence else self.plane_urgent
+            else:
+                pixmap = self.plane_normal_blink if plane.blink_attente else self.plane_normal
 
         vx, vy = plane.vx, plane.vy
 
