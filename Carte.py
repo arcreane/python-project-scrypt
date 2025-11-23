@@ -7,7 +7,6 @@ from Avions import Avions
 
 
 class MovingPlane:
-    """Triangle représentant un avion avec fuel, mouvement et clignotement."""
     def __init__(self, avion, x, y):
         self.avion = avion
         self.pos = QPointF(x, y)
@@ -22,7 +21,6 @@ class MovingPlane:
         if self.icon.isNull():
             print("ERREUR : icône avion introuvable")
         else:
-            # image carrée
             self.icon = self.icon.scaled(90, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self.size = 45
 
@@ -33,17 +31,11 @@ class MovingPlane:
     def move(self, w, h):
         self.pos.setX(self.pos.x() + self.vx)
         self.pos.setY(self.pos.y() + self.vy)
-
         bounced = False
-        if self.pos.x() < 0:
-            self.pos.setX(0); self.vx *= -1; bounced = True
-        elif self.pos.x() > w:
-            self.pos.setX(w); self.vx *= -1; bounced = True
-        if self.pos.y() < 0:
-            self.pos.setY(0); self.vy *= -1; bounced = True
-        elif self.pos.y() > h:
-            self.pos.setY(h); self.vy *= -1; bounced = True
-
+        if self.pos.x() < 0: self.pos.setX(0); self.vx*=-1; bounced=True
+        elif self.pos.x() > w: self.pos.setX(w); self.vx*=-1; bounced=True
+        if self.pos.y() < 0: self.pos.setY(0); self.vy*=-1; bounced=True
+        elif self.pos.y() > h: self.pos.setY(h); self.vy*=-1; bounced=True
         if bounced and (self.vx != 0 or self.vy != 0):
             self.last_angle = math.atan2(self.vy, self.vx)
             self.update_avion_cap()
@@ -54,8 +46,7 @@ class MovingPlane:
         self.avion.fuel = max(0, self.avion.fuel - conso_tick)
 
         if self.avion.fuel == 0:
-            self.vx = 0
-            self.vy = 0
+            self.vx = self.vy = 0
             self.avion.altitude = 0
             self.avion.vitesse = 0
             self.update_avion_cap()
@@ -66,8 +57,7 @@ class MovingPlane:
             self.update_avion_cap()
 
     def angle(self):
-        if self.vx != 0 or self.vy != 0:
-            return math.atan2(self.vy, self.vx)
+        if self.vx != 0 or self.vy != 0: return math.atan2(self.vy, self.vx)
         return self.last_angle
 
     def get_color(self):
@@ -77,65 +67,66 @@ class MovingPlane:
         critical_color = (0, 0, 0)
 
         if self.vx == 0 and self.vy == 0:
-            # avion posé = aucun clignotement
-            if fuel > 20:
-                return normal_color
-            elif fuel > 5:
-                return warning_color
-            else:
-                return critical_color
+            if fuel > 20: return normal_color
+            elif fuel > 5: return warning_color
+            else: return critical_color
 
         if fuel > 20: color = normal_color
-        elif fuel > 5: color = warning_color if (self.blink // 30) % 2 == 0 else normal_color
-        else: color = critical_color if (self.blink // 10) % 2 == 0 else warning_color
+        elif fuel > 5: color = warning_color if (self.blink//30)%2==0 else normal_color
+        else: color = critical_color if (self.blink//10)%2==0 else warning_color
 
         return color
 
     def update_avion_cap(self):
         if self.vx != 0 or self.vy != 0:
-            self.avion.cap = (math.degrees(math.atan2(self.vy, self.vx)) + 90) % 360
+            self.avion.cap = (math.degrees(math.atan2(self.vy, self.vx))+90)%360
 
     def update_velocity_from_cap(self):
-        """Met à jour vx et vy selon le cap actuel"""
         rad = math.radians(self.avion.cap - 90)
         speed = self.avion.vitesse / 250.0
-        self.vx = math.cos(rad) * speed
-        self.vy = math.sin(rad) * speed
+        self.vx = math.cos(rad)*speed
+        self.vy = math.sin(rad)*speed
         if self.vx != 0 or self.vy != 0:
             self.last_angle = math.atan2(self.vy, self.vx)
 
+    def is_blinking(self):
+        """Retourne True si l’avion est en train de clignoter (fuel faible)"""
+        fuel = self.avion.fuel
+        if fuel > 20:
+            return False
+        else:
+            return True
+
+    def is_in_urgence(self):
+        """Tous les avions qui clignotent ou arrêtés avec fuel critique"""
+        return self.is_blinking() or self.avion.fuel <= 5
+
+    def is_in_attente(self):
+        """Tous les avions qui ne clignotent pas et fuel suffisant"""
+        return not self.is_blinking() and self.avion.fuel > 5
+
+
 class GameWidget(QWidget):
-    """Widget de la carte / zone de jeu."""
     avion_selectionne_changed = Signal(object)
-    avion_updated = Signal(object)  # signal pour mise à jour instantanée
+    avion_updated = Signal(object)
 
     def __init__(self):
         super().__init__()
-        from PySide6.QtGui import QPixmap
-
-        self.background = QPixmap(
-            r"Images/ecran_fond_vue_de_haut.png"
-        )
-
-        if self.background.isNull():
-            print("ERREUR : image de fond NON chargée")
-        else:
-            print("Fond OK")
+        self.background = QPixmap("Images/ecran_fond_vue_de_haut.png")
         self.setWindowTitle("Avions - Triangles orientés")
-        self.resize(800, 600)
+        self.resize(800,600)
 
         self.planes = []
         self.selected_plane = None
-        self.stop_timers = {}  # timers pour suppression après 5s
+        self.stop_timers = {}
+        self.mode_highlight = None
 
         self.add_plane()
 
-        # Timer animation
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_game)
         self.timer.start(16)
 
-        # Timer apparition aléatoire
         self.spawn_timer = QTimer(self)
         self.spawn_timer.timeout.connect(self.spawn_plane)
         self.set_random_spawn_time()
@@ -144,30 +135,25 @@ class GameWidget(QWidget):
         if paused:
             self.timer.stop()
             self.spawn_timer.stop()
-            if hasattr(self, 'meteo_manager') and self.meteo_manager is not None:
-                self.meteo_manager.pause()
         else:
             self.timer.start()
-            self.set_random_spawn_time()  # pour relancer spawn_timer avec délai aléatoire
-            if hasattr(self, 'meteo_manager') and self.meteo_manager is not None:
-                self.meteo_manager.resume()
+            self.set_random_spawn_time()
 
     def set_random_spawn_time(self):
-        delay = random.randint(5000, 10000)
-        self.spawn_timer.start(delay)
+        self.spawn_timer.start(random.randint(5000,10000))
 
     def random_plane_data(self):
-        altitude = random.randint(1000, 12000)
-        vitesse = random.randint(200, 900)
-        fuel = random.randint(10, 100)
-        cap = random.randint(0, 359)
+        altitude = random.randint(1000,12000)
+        vitesse = random.randint(200,900)
+        fuel = random.randint(10,100)
+        cap = random.randint(0,359)
         return Avions(None, altitude, vitesse, fuel, cap)
 
     def add_plane(self):
-        x = random.randint(50, max(50, self.width() - 50))
-        y = random.randint(50, max(50, self.height() - 50))
+        x = random.randint(50,max(50,self.width()-50))
+        y = random.randint(50,max(50,self.height()-50))
         avion = self.random_plane_data()
-        plane = MovingPlane(avion, x, y)
+        plane = MovingPlane(avion,x,y)
         self.planes.append(plane)
         self.avion_updated.emit(plane)
 
@@ -176,109 +162,80 @@ class GameWidget(QWidget):
         self.set_random_spawn_time()
 
     def update_game(self):
-        w, h = self.width(), self.height()
+        w,h = self.width(), self.height()
         for p in self.planes[:]:
-            prev_vx, prev_vy = p.vx, p.vy
-
-            if hasattr(self, 'meteo_manager'):
-                self.meteo_manager.verifier_collisions(self.planes, self.selected_plane)
-
-            p.move(w, h)
+            prev_vx,prev_vy = p.vx,p.vy
+            p.move(w,h)
             p.update_fuel()
             self.avion_updated.emit(p)
-
-        # Détecter que l’avion vient de s’arrêter
-            if (prev_vx != 0 or prev_vy != 0) and p.vx == 0 and p.vy == 0:
+            if (prev_vx!=0 or prev_vy!=0) and p.vx==0 and p.vy==0:
                 if p not in self.stop_timers:
                     timer = QTimer(self)
                     timer.setSingleShot(True)
                     timer.timeout.connect(lambda pl=p: self.remove_plane(pl))
-                    timer.start(5000)  # 5 secondes
-                    self.stop_timers[p] = timer
-
+                    timer.start(5000)
+                    self.stop_timers[p]=timer
         self.update()
 
-    def remove_plane(self, plane):
-        """Supprime l’avion de la carte et déclenche la mise à jour de la liste"""
-        if plane in self.planes:
-            self.planes.remove(plane)
-        if plane in self.stop_timers:
-            self.stop_timers.pop(plane)
-        self.avion_updated.emit(plane)  # signal vers Jeu.py pour mettre à jour la liste
+    def remove_plane(self,plane):
+        if plane in self.planes: self.planes.remove(plane)
+        if plane in self.stop_timers: self.stop_timers.pop(plane)
+        self.avion_updated.emit(plane)
 
-    def draw_plane_icon(self, painter, plane: MovingPlane):
-        """Affiche l’avion comme une icône orientée, colorée et clignotante."""
-
-        angle_deg = math.degrees(plane.angle()) + 90
+    def draw_plane_icon(self,painter,plane:MovingPlane):
+        angle_deg = math.degrees(plane.angle())+90
         icon = plane.icon
-
-        if icon.isNull():
-            return  # icône non trouvée
-
-        # ---- 1) Rotation de l'icône ----
+        if icon.isNull(): return
         transform = QTransform()
         transform.rotate(angle_deg)
-        rotated = icon.transformed(transform, Qt.SmoothTransformation)
+        rotated = icon.transformed(transform,Qt.SmoothTransformation)
 
-        # ---- 2) Coloration dynamique (fuel / blink) ----
-        r, g, b = plane.get_color()
-        color = QColor(r, g, b)
-        # Désactive le clignotement quand l’avion est arrêté
-        if (plane.vx != 0 or plane.vy != 0) and plane.avion.fuel <= 5:
-            if (plane.blink // 10) % 2 == 0:
-                color.setAlpha(160)
+        r,g,b = plane.get_color()
+        color = QColor(r,g,b)
 
-        tinted = QImage(rotated.size(), QImage.Format_ARGB32)
+        # Transparence selon le mode sélectionné
+        if self.mode_highlight and plane is not self.selected_plane:
+            if self.mode_highlight == "urgence" and plane.is_in_attente():
+                # Urgence → rendre transparent les avions en attente
+                color.setAlpha(100)
+            elif self.mode_highlight == "attente" and plane.is_in_urgence():
+                # Attente → rendre transparent les avions en urgence
+                color.setAlpha(100)
+
+        tinted = QImage(rotated.size(),QImage.Format_ARGB32)
         tinted.fill(Qt.transparent)
-
         pt = QPainter(tinted)
         pt.setCompositionMode(QPainter.CompositionMode_Source)
-        pt.drawPixmap(0, 0, rotated)
+        pt.drawPixmap(0,0,rotated)
         pt.setCompositionMode(QPainter.CompositionMode_SourceIn)
-        pt.fillRect(tinted.rect(), color)
+        pt.fillRect(tinted.rect(),color)
         pt.end()
 
-        # ---- 3) Affichage sur la carte ----
-        x = plane.pos.x() - tinted.width() / 2
-        y = plane.pos.y() - tinted.height() / 2
-        painter.drawImage(x, y, tinted)
+        x = plane.pos.x()-tinted.width()/2
+        y = plane.pos.y()-tinted.height()/2
+        painter.drawImage(x,y,tinted)
 
-        # ---- 4) Contour bleu si sélectionné ----
         if plane is self.selected_plane:
-            painter.setPen(QPen(QColor(50, 120, 255), 3))
+            painter.setPen(QPen(QColor(50,120,255),3))
             painter.setBrush(Qt.NoBrush)
-            radius = plane.size
-            painter.drawEllipse(plane.pos, radius, radius)
+            painter.drawEllipse(plane.pos,plane.size,plane.size)
 
-    def paintEvent(self, event):
+    def paintEvent(self,event):
         painter = QPainter(self)
-
-        # ---- DESSIN DU FOND ----
         if not self.background.isNull():
             target_rect = self.rect()
-            scaled = self.background.scaled(
-                target_rect.size(),
-                Qt.IgnoreAspectRatio,
-                Qt.SmoothTransformation
-            )
-            painter.drawPixmap(0, 0, scaled)
-
+            scaled = self.background.scaled(target_rect.size(),Qt.IgnoreAspectRatio,Qt.SmoothTransformation)
+            painter.drawPixmap(0,0,scaled)
         painter.setRenderHint(QPainter.Antialiasing)
         for plane in self.planes:
-            self.draw_plane_icon(painter, plane)
-            painter.setPen(Qt.black)
-            painter.setFont(QFont("Arial", 10))
-            text_y = plane.pos.y() + plane.size + 15
-            if text_y > self.height() - 5:
-                text_y = plane.pos.y() - plane.size - 5
-            painter.drawText(plane.pos.x() - 30, text_y, 100, 15, Qt.AlignCenter, plane.avion.nom)
+            self.draw_plane_icon(painter,plane)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self,event):
         pos = event.position()
         clicked = False
         for p in self.planes:
-            dx, dy = pos.x() - p.pos.x(), pos.y() - p.pos.y()
-            if dx*dx + dy*dy <= (p.size * 1.2)**2:
+            dx,dy = pos.x()-p.pos.x(),pos.y()-p.pos.y()
+            if dx*dx+dy*dy <= (p.size*1.2)**2:
                 self.selected_plane = p
                 clicked = True
                 self.avion_selectionne_changed.emit(p.avion)
@@ -288,17 +245,7 @@ class GameWidget(QWidget):
             self.avion_selectionne_changed.emit(None)
         self.update()
 
-    # ---------- API pour contrôle avion ----------
-    def _update_velocity_from_cap(self, plane: MovingPlane):
-        if plane is None: return
-        plane.avion.cap %= 360
-        if plane.avion.fuel == 0: plane.vx = plane.vy = 0; return
-        rad = math.radians(plane.avion.cap - 90)
-        speed = plane.avion.vitesse / 250.0
-        plane.vx = math.cos(rad) * speed
-        plane.vy = math.sin(rad) * speed
-        if plane.vx != 0 or plane.vy != 0: plane.last_angle = math.atan2(plane.vy, plane.vx)
-
+    # -------- Contrôles --------
     def monter_selected(self):
         if self.selected_plane:
             self.selected_plane.avion.monter()
@@ -324,3 +271,15 @@ class GameWidget(QWidget):
             self._update_velocity_from_cap(self.selected_plane)
             self.avion_updated.emit(self.selected_plane)
             self.update()
+
+    def urgence_selected(self):
+        self.mode_highlight="urgence"
+        self.update()
+
+    def attente_selected(self):
+        self.mode_highlight="attente"
+        self.update()
+
+    def reset_highlight(self):
+        self.mode_highlight=None
+        self.update()
