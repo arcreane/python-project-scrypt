@@ -200,7 +200,7 @@ class GameWidget(QWidget):
         self.avion_updated.emit(plane)  # signal vers Jeu.py pour mettre à jour la liste
 
     def draw_plane_image(self, painter, plane: MovingPlane):
-        # Choix de l'image selon état
+        # Choix image
         if plane is self.selected_plane:
             pixmap = self.plane_selected
         elif plane.avion.fuel < 10:
@@ -210,22 +210,25 @@ class GameWidget(QWidget):
 
         vx, vy = plane.vx, plane.vy
 
+        # Cas avion immobile
         if vx == 0 and vy == 0:
-            angle_deg = 0  # Avion à l'arrêt
+            angle_deg = 0
+            flip = False
         else:
-            # Angle réel de déplacement
-            rad = math.atan2(vy, vx)
-            angle_deg = math.degrees(rad)
+            # on inverse vy pour corriger le sens vertical
+            angle_rad = math.atan2(-vy, vx)
+            angle_deg = math.degrees(angle_rad)
+            flip = vx > 0  # inversion horizontale si avion vers la droite
 
-            # Limite la rotation à ±45°
-            angle_deg = max(-45, min(45, angle_deg))
+        # Limite l’inclinaison à ±45°
+        delta = max(-45, min(45, angle_deg))
 
         painter.save()
         painter.translate(plane.pos.x(), plane.pos.y())
 
-        # Le sprite regarde vers la droite, donc pas de marche arrière
-        painter.rotate(angle_deg)
-
+        if flip:
+            painter.scale(-1, 1)  # inversion horizontale
+        painter.rotate(delta)
         painter.drawPixmap(-pixmap.width() // 2, -pixmap.height() // 2, pixmap)
         painter.restore()
 
