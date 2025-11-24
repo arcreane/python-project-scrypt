@@ -91,20 +91,19 @@ class ContouredCompass(QWidget):
         radius = size // 2 - 12
 
         # Fond carré avec bord arrondi
-        rect = self.rect()
         square_size = size
         top_left_x = center_x - square_size // 2
         top_left_y = center_y - square_size // 2
-        painter.setBrush(QColor(34, 34, 34))
-        painter.setPen(QPen(QColor(68, 68, 68), 2))
+        painter.setBrush(QColor(34, 34, 34))  # fond sombre
+        painter.setPen(QPen(QColor(68, 68, 68), 2))  # bordure
         painter.drawRoundedRect(top_left_x, top_left_y, square_size, square_size, 10, 10)
 
-        # Cercle intérieur
+        # Cercle intérieur plus visible
         painter.setBrush(Qt.NoBrush)
-        painter.setPen(QPen(QColor(0, 0, 0), 2))
+        painter.setPen(QPen(QColor(200, 200, 200), 3))
         painter.drawEllipse(center_x - radius, center_y - radius, radius*2, radius*2)
 
-        # N/E/S/W
+        # N/E/S/W avec contour noir et texte blanc
         painter.setFont(self.font())
         for angle, label in [(0, "N"), (90, "E"), (180, "S"), (270, "W")]:
             rad = math.radians(angle)
@@ -120,20 +119,20 @@ class ContouredCompass(QWidget):
             painter.setPen(QColor(255,255,255))
             painter.drawText(int(x-6), int(y+6), label)
 
-        # Aiguille rouge -> orange
+        # Aiguille rouge pointant vers le cap de l’avion
         painter.save()
         painter.translate(center_x, center_y)
-        painter.rotate(-self.cap)
-        grad = QConicalGradient(0, 0, 0)
-        grad.setColorAt(0.0, QColor(255,0,0))
-        grad.setColorAt(1.0, QColor(255,165,0))
+        # On fait tourner l’aiguille selon le cap réel
+        painter.rotate(self.cap)
         pen = QPen(QColor(255,0,0), 4)
         painter.setPen(pen)
-        painter.setBrush(grad)
-        painter.drawLine(0, 0, int(radius*0.78), 0)
+        painter.setBrush(QColor(255,0,0))
+        # L’aiguille part du centre et pointe vers le haut (Nord)
+        painter.drawLine(0, 0, 0, -int(radius*0.78))
         painter.restore()
 
         painter.end()
+
 
 
 class MainGameWindow(QMainWindow):
