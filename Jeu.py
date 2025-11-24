@@ -105,15 +105,22 @@ class ContouredCompass(QWidget):
 
         # N/E/S/W avec contour noir et texte blanc
         painter.setFont(self.font())
-        for angle, label in [(0, "N"), (90, "E"), (180, "S"), (270, "W")]:
-            rad = math.radians(angle)
-            x = center_x + (radius - 20) * math.cos(rad)
-            y = center_y - (radius - 20) * math.sin(rad)
+        padding_text = 12  # distance entre le cercle et le texte
+        offsets = {
+            "N": (0, -radius + padding_text),
+            "E": (radius - padding_text, 0),
+            "S": (0, radius - padding_text),
+            "W": (-radius + padding_text, 0)
+        }
+
+        for label, (dx, dy) in offsets.items():
+            x = center_x + dx
+            y = center_y + dy
 
             # contour noir
-            for dx, dy in [(-1,-1),(1,-1),(-1,1),(1,1)]:
+            for ox, oy in [(-1,-1),(1,-1),(-1,1),(1,1)]:
                 painter.setPen(QColor(0,0,0))
-                painter.drawText(int(x+dx-6), int(y+dy+6), label)
+                painter.drawText(int(x+ox-6), int(y+oy+6), label)
 
             # texte blanc
             painter.setPen(QColor(255,255,255))
@@ -122,12 +129,10 @@ class ContouredCompass(QWidget):
         # Aiguille rouge pointant vers le cap de l’avion
         painter.save()
         painter.translate(center_x, center_y)
-        # On fait tourner l’aiguille selon le cap réel
         painter.rotate(self.cap)
         pen = QPen(QColor(255,0,0), 4)
         painter.setPen(pen)
         painter.setBrush(QColor(255,0,0))
-        # L’aiguille part du centre et pointe vers le haut (Nord)
         painter.drawLine(0, 0, 0, -int(radius*0.78))
         painter.restore()
 
