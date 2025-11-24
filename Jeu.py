@@ -1,4 +1,5 @@
 import sys
+import math
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
     QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar
@@ -62,6 +63,58 @@ class ContouredProgressBar(QProgressBar):
         pen = QPen(QColor(255, 255, 255))
         painter.setPen(pen)
         painter.drawText(rect, Qt.AlignCenter, text)
+        painter.end()
+
+
+# ---------- Boussole (CompassLabel) ----------
+class CompassLabel(QLabel):
+    def __init__(self):
+        super().__init__()
+        self.cap = 0
+        self.setMinimumHeight(100)
+
+    def set_cap(self, cap):
+        # normaliser et forcer refresh
+        try:
+            self.cap = float(cap) % 360
+        except Exception:
+            self.cap = 0
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        rect = self.rect()
+        center = rect.center()
+        radius = min(rect.width(), rect.height()) // 2 - 10
+
+        # Cercle de la boussole
+        painter.setPen(QPen(QColor(0, 0, 0), 2))
+        painter.setBrush(Qt.NoBrush)
+        painter.drawEllipse(center, radius, radius)
+
+        # N/E/S/W avec contour noir + texte blanc (comme les autres labels)
+        for angle, label in [(0, "N"), (90, "E"), (180, "S"), (270, "W")]:
+            rad = math.radians(angle)
+            x = center.x() + (radius - 15) * math.cos(rad)
+            y = center.y() - (radius - 15) * math.sin(rad)
+
+            # contour noir
+            for dx, dy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
+                painter.setPen(QColor(0, 0, 0))
+                painter.drawText(x + dx - 6, y + dy + 6, label)
+
+            # texte blanc
+            painter.setPen(QColor(255, 255, 255))
+            painter.drawText(x - 6, y + 6, label)
+
+        # Aiguille rouge pointant vers le cap (0° = Nord)
+        rad = math.radians(90 - self.cap)
+        x = center.x() + radius * 0.8 * math.cos(rad)
+        y = center.y() - radius * 0.8 * math.sin(rad)
+        painter.setPen(QPen(QColor(255, 0, 0), 3))
+        painter.drawLine(center.x(), center.y(), x, y)
+
         painter.end()
 
 
@@ -197,6 +250,10 @@ class MainGameWindow(QMainWindow):
         font.setBold(True)
         self.label_nom_avion.setFont(font)
         layout_controles.addWidget(self.label_nom_avion)
+
+        # --- Boussole ajoutée ici (entre le nom et les barres) ---
+        self.compass = CompassLabel()
+        layout_controles.addWidget(self.compass)
 
         self.bar_altitude = ContouredProgressBar()
         self.bar_vitesse = ContouredProgressBar()
@@ -351,6 +408,11 @@ class MainGameWindow(QMainWindow):
                                 (255, 255, 0), (255, 128, 0), (255, 0, 0)]
             self.update_progress_bar_spectrum(self.bar_vitesse, plane.avion.vitesse, 900, vitesse_spectrum)
             self.update_progress_bar_spectrum(self.bar_fuel, plane.avion.fuel, 100, [(255, 0, 0), (255, 255, 0)])
+            # Mise à jour de la boussole si l'avion sélectionné change
+            try:
+                self.compass.set_cap(plane.avion.cap)
+            except Exception:
+                pass
 
     def on_liste_avion_selected(self, current, previous):
         if current:
@@ -360,6 +422,11 @@ class MainGameWindow(QMainWindow):
             self.widget_carte.update()
             self.update_plane_list_item(plane)
             self.label_nom_avion.setText(plane.avion.nom)
+            # mettre à jour la boussole
+            try:
+                self.compass.set_cap(plane.avion.cap)
+            except Exception:
+                pass
 
     def on_carte_avion_selected(self, avion):
         if avion is None:
@@ -368,10 +435,20 @@ class MainGameWindow(QMainWindow):
             self.bar_vitesse.setValue(0)
             self.bar_fuel.setValue(0)
             self.landing_view.set_selected_plane(None)
+            # reset boussole
+            try:
+                self.compass.set_cap(0)
+            except Exception:
+                pass
             return
         self.label_nom_avion.setText(avion.nom)
         self.update_plane_list_item(avion)
         self.landing_view.set_selected_plane(avion)
+        # mettre à jour la boussole
+        try:
+            self.compass.set_cap(avion.cap)
+        except Exception:
+            pass
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole).avion == avion:
