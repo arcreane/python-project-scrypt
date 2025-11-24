@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QColor, QPen
+from PySide6.QtGui import QPainter, QColor, QPen, QConicalGradient
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from Carte import GameWidget
 from message_defilant import MarqueeLabel
@@ -66,15 +66,15 @@ class ContouredProgressBar(QProgressBar):
         painter.end()
 
 
-# ---------- Boussole (CompassLabel) ----------
-class CompassLabel(QLabel):
+# ---------------- ContouredCompass (boussole stylée comme les barres) ----------------
+class ContouredCompass(QWidget):
     def __init__(self):
         super().__init__()
         self.cap = 0
-        self.setMinimumHeight(100)
+        self.setMinimumHeight(220)  # augmente la taille verticale
+        self.setMinimumWidth(220)  # assure que la largeur suit pour un cercle plus grand
 
     def set_cap(self, cap):
-        # normaliser et forcer refresh
         try:
             self.cap = float(cap) % 360
         except Exception:
@@ -86,20 +86,27 @@ class CompassLabel(QLabel):
         painter.setRenderHint(QPainter.Antialiasing)
         rect = self.rect()
         center = rect.center()
-        radius = min(rect.width(), rect.height()) // 2 - 10
+        radius = min(rect.width(), rect.height()) // 2 - 12
 
-        # Cercle de la boussole
-        painter.setPen(QPen(QColor(0, 0, 0), 2))
+        # Fond sombre + bordure arrondie (visuellement cohérent avec les barres)
+        painter.setBrush(QColor(34, 34, 34))  # #222-like
+        painter.setPen(QPen(QColor(68, 68, 68), 2))  # #444-like
+        painter.drawRoundedRect(rect.adjusted(2, 2, -2, -2), 10, 10)
+
+        # Cercle intérieur (bord noir)
         painter.setBrush(Qt.NoBrush)
+        painter.setPen(QPen(QColor(0, 0, 0), 2))
         painter.drawEllipse(center, radius, radius)
 
-        # N/E/S/W avec contour noir + texte blanc (comme les autres labels)
+        # N/E/S/W avec contour noir + texte blanc (même traitement que pour les barres)
+        font = self.font()
+        painter.setFont(font)
         for angle, label in [(0, "N"), (90, "E"), (180, "S"), (270, "W")]:
             rad = math.radians(angle)
-            x = center.x() + (radius - 15) * math.cos(rad)
-            y = center.y() - (radius - 15) * math.sin(rad)
+            x = center.x() + (radius - 20) * math.cos(rad)
+            y = center.y() - (radius - 20) * math.sin(rad)
 
-            # contour noir
+            # contour noir (4 offsets)
             for dx, dy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
                 painter.setPen(QColor(0, 0, 0))
                 painter.drawText(x + dx - 6, y + dy + 6, label)
@@ -108,12 +115,19 @@ class CompassLabel(QLabel):
             painter.setPen(QColor(255, 255, 255))
             painter.drawText(x - 6, y + 6, label)
 
-        # Aiguille rouge pointant vers le cap (0° = Nord)
-        rad = math.radians(90 - self.cap)
-        x = center.x() + radius * 0.8 * math.cos(rad)
-        y = center.y() - radius * 0.8 * math.sin(rad)
-        painter.setPen(QPen(QColor(255, 0, 0), 3))
-        painter.drawLine(center.x(), center.y(), x, y)
+        # Aiguille avec gradient rouge -> orange (cohérent visuellement avec les barres)
+        painter.save()
+        painter.translate(center.x(), center.y())
+        painter.rotate(-self.cap)  # on inverse la rotation pour pointer vers le cap
+        grad = QConicalGradient(0, 0, 0)
+        grad.setColorAt(0.0, QColor(255, 0, 0))
+        grad.setColorAt(1.0, QColor(255, 165, 0))
+        pen = QPen(QColor(255, 0, 0), 4)
+        painter.setPen(pen)
+        painter.setBrush(grad)
+        # dessiner une ligne horizontale (puisque on a pivoté le contexte)
+        painter.drawLine(0, 0, int(radius * 0.78), 0)
+        painter.restore()
 
         painter.end()
 
@@ -252,7 +266,7 @@ class MainGameWindow(QMainWindow):
         layout_controles.addWidget(self.label_nom_avion)
 
         # --- Boussole ajoutée ici (entre le nom et les barres) ---
-        self.compass = CompassLabel()
+        self.compass = ContouredCompass()
         layout_controles.addWidget(self.compass)
 
         self.bar_altitude = ContouredProgressBar()
