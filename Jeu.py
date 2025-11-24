@@ -134,7 +134,6 @@ class ContouredCompass(QWidget):
         painter.end()
 
 
-
 class MainGameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
