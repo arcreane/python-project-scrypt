@@ -12,6 +12,29 @@ from meteo import MeteoManager
 from landing import LandingView
 
 
+# ---------- QLabel avec contour noir ----------
+class ContouredLabel(QLabel):
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setFont(self.font())
+        text = self.text()
+        rect = self.rect()
+
+        # Contour noir
+        pen = QPen(QColor(0, 0, 0))
+        painter.setPen(pen)
+        offsets = [(-1, -1), (1, -1), (-1, 1), (1, 1)]
+        for dx, dy in offsets:
+            painter.drawText(rect.translated(dx, dy), Qt.AlignCenter, text)
+
+        # Texte blanc au-dessus
+        pen = QPen(QColor(255, 255, 255))
+        painter.setPen(pen)
+        painter.drawText(rect, Qt.AlignCenter, text)
+        painter.end()
+
+
 # ---------- QProgressBar avec contour de texte ----------
 class ContouredProgressBar(QProgressBar):
     def __init__(self, *args, **kwargs):
@@ -166,7 +189,15 @@ class MainGameWindow(QMainWindow):
         layout_controles = QVBoxLayout()
         layout_controles.addStretch(1)
 
-        # ---------- Barres avec contour ----------
+        # Informations de l'avion sélectionné avec contour
+        self.label_nom_avion = ContouredLabel("Aucun avion sélectionné")
+        self.label_nom_avion.setAlignment(Qt.AlignCenter)
+        font = self.label_nom_avion.font()
+        font.setPointSize(20)
+        font.setBold(True)
+        self.label_nom_avion.setFont(font)
+        layout_controles.addWidget(self.label_nom_avion)
+
         self.bar_altitude = ContouredProgressBar()
         self.bar_vitesse = ContouredProgressBar()
         self.bar_fuel = ContouredProgressBar()
@@ -175,14 +206,15 @@ class MainGameWindow(QMainWindow):
         self.bar_vitesse.setFormat("Vitesse : %v km/h")
         self.bar_fuel.setFormat("Carburant : %v %")
 
-        # Valeurs initiales et chunks visibles dès le début
+        # Valeurs initiales
         self.bar_altitude.setMaximum(12000)
         self.bar_altitude.setValue(0)
         self.update_progress_bar_spectrum(self.bar_altitude, 0, 12000, [(80, 0, 120), (120, 200, 255)])
 
         self.bar_vitesse.setMaximum(900)
         self.bar_vitesse.setValue(0)
-        self.update_progress_bar_spectrum(self.bar_vitesse, 0, 900, [(128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)])
+        self.update_progress_bar_spectrum(self.bar_vitesse, 0, 900,
+                                          [(128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)])
 
         self.bar_fuel.setMaximum(100)
         self.bar_fuel.setValue(0)
@@ -192,7 +224,6 @@ class MainGameWindow(QMainWindow):
         layout_controles.addWidget(self.bar_altitude)
         layout_controles.addWidget(self.bar_vitesse)
         layout_controles.addWidget(self.bar_fuel)
-
         layout_controles.addWidget(btn_urgence)
         layout_controles.addWidget(btn_attente)
         layout_controles.addWidget(btn_atterrir)
@@ -248,6 +279,7 @@ class MainGameWindow(QMainWindow):
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
         self.widget_carte.avion_updated.connect(self.update_plane_list_item)
 
+    # ---------- Fonctions ----------
     def toggle_pause(self):
         self.paused = not self.paused
         self.widget_carte.set_paused(self.paused)
@@ -270,7 +302,6 @@ class MainGameWindow(QMainWindow):
         g = int(spectrum[idx][1] + (spectrum[idx + 1][1] - spectrum[idx][1]) * t_local)
         b = int(spectrum[idx][2] + (spectrum[idx + 1][2] - spectrum[idx][2]) * t_local)
 
-        # Couleur du chunk
         bar.setStyleSheet(f"""
         QProgressBar {{
             border: 2px solid #444;
@@ -316,7 +347,8 @@ class MainGameWindow(QMainWindow):
         if plane is self.widget_carte.selected_plane:
             self.update_progress_bar_spectrum(self.bar_altitude, plane.avion.altitude, 12000,
                                               [(80, 0, 120), (120, 200, 255)])
-            vitesse_spectrum = [(128, 0, 128), (0, 0, 255), (0, 255, 0), (255, 255, 0), (255, 128, 0), (255, 0, 0)]
+            vitesse_spectrum = [(128, 0, 128), (0, 0, 255), (0, 255, 0),
+                                (255, 255, 0), (255, 128, 0), (255, 0, 0)]
             self.update_progress_bar_spectrum(self.bar_vitesse, plane.avion.vitesse, 900, vitesse_spectrum)
             self.update_progress_bar_spectrum(self.bar_fuel, plane.avion.fuel, 100, [(255, 0, 0), (255, 255, 0)])
 
@@ -327,14 +359,17 @@ class MainGameWindow(QMainWindow):
             self.landing_view.set_selected_plane(plane)
             self.widget_carte.update()
             self.update_plane_list_item(plane)
+            self.label_nom_avion.setText(plane.avion.nom)
 
     def on_carte_avion_selected(self, avion):
         if avion is None:
+            self.label_nom_avion.setText("Aucun avion sélectionné")
             self.bar_altitude.setValue(0)
             self.bar_vitesse.setValue(0)
             self.bar_fuel.setValue(0)
             self.landing_view.set_selected_plane(None)
             return
+        self.label_nom_avion.setText(avion.nom)
         self.update_plane_list_item(avion)
         self.landing_view.set_selected_plane(avion)
         for i in range(self.liste_avions.count()):
