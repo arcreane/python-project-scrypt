@@ -71,8 +71,7 @@ class ContouredCompass(QWidget):
     def __init__(self):
         super().__init__()
         self.cap = 0
-        self.setMinimumHeight(220)  # augmente la taille verticale
-        self.setMinimumWidth(220)  # assure que la largeur suit pour un cercle plus grand
+        self.setMinimumSize(220, 220)  # carré minimum
 
     def set_cap(self, cap):
         try:
@@ -84,49 +83,54 @@ class ContouredCompass(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+
+        # carré basé sur la plus petite dimension
+        size = min(self.width(), self.height())
+        center_x = self.width() // 2
+        center_y = self.height() // 2
+        radius = size // 2 - 12
+
+        # Fond carré avec bord arrondi
         rect = self.rect()
-        center = rect.center()
-        radius = min(rect.width(), rect.height()) // 2 - 12
+        square_size = size
+        top_left_x = center_x - square_size // 2
+        top_left_y = center_y - square_size // 2
+        painter.setBrush(QColor(34, 34, 34))
+        painter.setPen(QPen(QColor(68, 68, 68), 2))
+        painter.drawRoundedRect(top_left_x, top_left_y, square_size, square_size, 10, 10)
 
-        # Fond sombre + bordure arrondie (visuellement cohérent avec les barres)
-        painter.setBrush(QColor(34, 34, 34))  # #222-like
-        painter.setPen(QPen(QColor(68, 68, 68), 2))  # #444-like
-        painter.drawRoundedRect(rect.adjusted(2, 2, -2, -2), 10, 10)
-
-        # Cercle intérieur (bord noir)
+        # Cercle intérieur
         painter.setBrush(Qt.NoBrush)
         painter.setPen(QPen(QColor(0, 0, 0), 2))
-        painter.drawEllipse(center, radius, radius)
+        painter.drawEllipse(center_x - radius, center_y - radius, radius*2, radius*2)
 
-        # N/E/S/W avec contour noir + texte blanc (même traitement que pour les barres)
-        font = self.font()
-        painter.setFont(font)
+        # N/E/S/W
+        painter.setFont(self.font())
         for angle, label in [(0, "N"), (90, "E"), (180, "S"), (270, "W")]:
             rad = math.radians(angle)
-            x = center.x() + (radius - 20) * math.cos(rad)
-            y = center.y() - (radius - 20) * math.sin(rad)
+            x = center_x + (radius - 20) * math.cos(rad)
+            y = center_y - (radius - 20) * math.sin(rad)
 
-            # contour noir (4 offsets)
-            for dx, dy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
-                painter.setPen(QColor(0, 0, 0))
-                painter.drawText(x + dx - 6, y + dy + 6, label)
+            # contour noir
+            for dx, dy in [(-1,-1),(1,-1),(-1,1),(1,1)]:
+                painter.setPen(QColor(0,0,0))
+                painter.drawText(int(x+dx-6), int(y+dy+6), label)
 
             # texte blanc
-            painter.setPen(QColor(255, 255, 255))
-            painter.drawText(x - 6, y + 6, label)
+            painter.setPen(QColor(255,255,255))
+            painter.drawText(int(x-6), int(y+6), label)
 
-        # Aiguille avec gradient rouge -> orange (cohérent visuellement avec les barres)
+        # Aiguille rouge -> orange
         painter.save()
-        painter.translate(center.x(), center.y())
-        painter.rotate(-self.cap)  # on inverse la rotation pour pointer vers le cap
+        painter.translate(center_x, center_y)
+        painter.rotate(-self.cap)
         grad = QConicalGradient(0, 0, 0)
-        grad.setColorAt(0.0, QColor(255, 0, 0))
-        grad.setColorAt(1.0, QColor(255, 165, 0))
-        pen = QPen(QColor(255, 0, 0), 4)
+        grad.setColorAt(0.0, QColor(255,0,0))
+        grad.setColorAt(1.0, QColor(255,165,0))
+        pen = QPen(QColor(255,0,0), 4)
         painter.setPen(pen)
         painter.setBrush(grad)
-        # dessiner une ligne horizontale (puisque on a pivoté le contexte)
-        painter.drawLine(0, 0, int(radius * 0.78), 0)
+        painter.drawLine(0, 0, int(radius*0.78), 0)
         painter.restore()
 
         painter.end()
