@@ -20,5 +20,9 @@ class Avions:
         self.cap -= 45
     def droite(self):
         self.cap += 45
+    def accelerer(self):
+        self.vitesse += 10
+    def ralentir(self):
+        self.vitesse -= 10
     def __del__(self):
         Avions.nb_avions -= 1

@@ -256,6 +256,8 @@ class MainGameWindow(QMainWindow):
         btn_descendre.clicked.connect(self.widget_carte.descendre_selected)
         btn_gauche.clicked.connect(self.widget_carte.gauche_selected)
         btn_droite.clicked.connect(self.widget_carte.droite_selected)
+        btn_accelerer.clicked.connect(self.widget_carte.accelerer_selected)
+        btn_ralentir.clicked.connect(self.widget_carte.ralentir_selected)
         btn_urgence.clicked.connect(self.widget_carte.urgence_selected)
         btn_attente.clicked.connect(self.widget_carte.attente_selected)
 

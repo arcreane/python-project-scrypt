@@ -193,13 +193,10 @@ class GameWidget(QWidget):
         r,g,b = plane.get_color()
         color = QColor(r,g,b)
 
-        # Transparence selon le mode sélectionné
         if self.mode_highlight and plane is not self.selected_plane:
             if self.mode_highlight == "urgence" and plane.is_in_attente():
-                # Urgence → rendre transparent les avions en attente
                 color.setAlpha(100)
             elif self.mode_highlight == "attente" and plane.is_in_urgence():
-                # Attente → rendre transparent les avions en urgence
                 color.setAlpha(100)
 
         tinted = QImage(rotated.size(),QImage.Format_ARGB32)
@@ -272,9 +269,22 @@ class GameWidget(QWidget):
             self.avion_updated.emit(self.selected_plane)
             self.update()
 
+    def accelerer_selected(self):
+        if self.selected_plane:
+            self.selected_plane.avion.accelerer()
+            self._update_velocity_from_cap(self.selected_plane)  # <-- correction ici
+            self.avion_updated.emit(self.selected_plane)
+            self.update()
+
+    def ralentir_selected(self):
+        if self.selected_plane:
+            self.selected_plane.avion.ralentir()
+            self._update_velocity_from_cap(self.selected_plane)  # <-- correction ici
+            self.avion_updated.emit(self.selected_plane)
+            self.update()
+
     def urgence_selected(self):
         if self.mode_highlight == "urgence":
-            # Si Urgence déjà actif → revenir au mode normal
             self.mode_highlight = None
         else:
             self.mode_highlight = "urgence"
@@ -282,7 +292,6 @@ class GameWidget(QWidget):
 
     def attente_selected(self):
         if self.mode_highlight == "attente":
-            # Si Attente déjà actif → revenir au mode normal
             self.mode_highlight = None
         else:
             self.mode_highlight = "attente"
@@ -291,3 +300,7 @@ class GameWidget(QWidget):
     def reset_highlight(self):
         self.mode_highlight=None
         self.update()
+
+    def _update_velocity_from_cap(self, plane: MovingPlane):
+        """Met à jour vx/vy en fonction du cap et de la vitesse actuelle"""
+        plane.update_velocity_from_cap()
