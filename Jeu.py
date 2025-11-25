@@ -268,16 +268,19 @@ class MainGameWindow(QMainWindow):
 
         # Informations de l'avion sélectionné avec contour
         self.label_nom_avion = ContouredLabel("Aucun avion sélectionné")
-        self.label_nom_avion.setAlignment(Qt.AlignCenter)
+        self.label_nom_avion.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         font = self.label_nom_avion.font()
-        font.setPointSize(20)
+        font.setPointSize(18)
         font.setBold(True)
         self.label_nom_avion.setFont(font)
-        layout_controles.addWidget(self.label_nom_avion)
+        #layout_controles.addWidget(self.label_nom_avion)
 
-        # --- Boussole ajoutée ici (entre le nom et les barres) ---
+        # Boussole
         self.compass = ContouredCompass()
-        layout_controles.addWidget(self.compass)
+        layout_avion_top = QHBoxLayout()
+        layout_avion_top.addWidget(self.label_nom_avion, 1)
+        layout_avion_top.addWidget(self.compass, 0)
+        layout_controles.addLayout(layout_avion_top)
 
         self.bar_altitude = ContouredProgressBar()
         self.bar_vitesse = ContouredProgressBar()
@@ -454,7 +457,7 @@ class MainGameWindow(QMainWindow):
 
     def on_carte_avion_selected(self, avion):
         if avion is None:
-            self.label_nom_avion.setText("Aucun avion sélectionné")
+            self.label_nom_avion.setText("Sélectionner un avion")
             self.bar_altitude.setValue(0)
             self.bar_vitesse.setValue(0)
             self.bar_fuel.setValue(0)
