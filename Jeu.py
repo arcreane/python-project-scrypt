@@ -267,7 +267,7 @@ class MainGameWindow(QMainWindow):
         layout_controles.addStretch(1)
 
         # Informations de l'avion sélectionné avec contour
-        self.label_nom_avion = ContouredLabel("Aucun avion sélectionné")
+        self.label_nom_avion = ContouredLabel("Sélectionner un avion")
         self.label_nom_avion.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         font = self.label_nom_avion.font()
         font.setPointSize(18)
@@ -290,6 +290,20 @@ class MainGameWindow(QMainWindow):
         self.bar_vitesse.setFormat("Vitesse : %v km/h")
         self.bar_fuel.setFormat("Carburant : %v %")
 
+        layout_urgence_attente = QHBoxLayout()
+        layout_urgence_attente.setSpacing(5)
+        layout_urgence_attente.addWidget(btn_urgence)
+        layout_urgence_attente.addWidget(btn_attente)
+
+        layout_controles.addWidget(self.bar_altitude)
+        layout_controles.addWidget(self.bar_vitesse)
+        layout_controles.addWidget(self.bar_fuel)
+
+        layout_controles.addLayout(layout_urgence_attente)
+        layout_controles.addWidget(btn_atterrir)
+
+        group_controles.setLayout(layout_controles)
+
         # Valeurs initiales
         self.bar_altitude.setMaximum(12000)
         self.bar_altitude.setValue(0)
@@ -304,14 +318,6 @@ class MainGameWindow(QMainWindow):
         self.bar_fuel.setValue(0)
         self.update_progress_bar_spectrum(self.bar_fuel, 0, 100, [(255,0,0),(255,255,0)])
 
-        # Layouts
-        layout_controles.addWidget(self.bar_altitude)
-        layout_controles.addWidget(self.bar_vitesse)
-        layout_controles.addWidget(self.bar_fuel)
-        layout_controles.addWidget(btn_urgence)
-        layout_controles.addWidget(btn_attente)
-        layout_controles.addWidget(btn_atterrir)
-        group_controles.setLayout(layout_controles)
 
         group_instructions = QGroupBox("Instructions")
         layout_instructions = QVBoxLayout()
