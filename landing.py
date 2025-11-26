@@ -21,10 +21,11 @@ class LandingView(QLabel):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(200, 150)
 
+        self.global_paused = False
         self.ground_plane_active = False
         self.ground_x = 20
         self.ground_y = 20
-        self.ground_scale = 0.25  # 🔥 augmenter l'échelle pour un avion plus grand
+        self.ground_scale = 0.30
 
     def set_selected_plane(self, plane):
         if self.locked:
@@ -128,11 +129,12 @@ class LandingView(QLabel):
     def move_ground_plane(self, dx=0, dy=0):
         if not self.ground_plane_active:
             return
+        if self.global_paused:
+            return  # ne bouge pas si Pause globale
 
         self.ground_x += dx
         self.ground_y += dy
 
-        # limites
         max_x = self.pixmap_avion.width() - int(self.plane_overlay.width() * self.ground_scale)
         max_y = self.pixmap_avion.height() - int(self.plane_overlay.height() * self.ground_scale)
 
@@ -141,7 +143,6 @@ class LandingView(QLabel):
 
         self.update_ground_plane()
 
-        # 🔹 Check si l'avion atteint le bas
         if self.ground_y >= max_y:
             self.finish_landing()
 

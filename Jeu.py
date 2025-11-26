@@ -22,6 +22,7 @@ from esthetisme_instructions_layout import style_layout_instructions
 class MainGameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.global_paused = False  # pour la pause complète du jeu
         self.paused = False
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
@@ -284,12 +285,18 @@ class MainGameWindow(QMainWindow):
 
     # Fonctions utilitaires
     def toggle_pause(self):
-        self.paused = not self.paused
-        self.widget_carte.set_paused(self.paused)
-        CollisionManager.paused = self.paused
-        if hasattr(self.meteo_manager, 'set_paused'):
-            self.meteo_manager.set_paused(self.paused)
-        self.btn_pause.setText("Reprendre" if self.paused else "Pause")
+        self.paused = not self.paused  # Pause globale
+
+        # 🔹 Si on n’est pas en mode atterrissage
+        if not getattr(self, "control_ground_mode", False):
+            self.widget_carte.set_paused(self.paused)
+            CollisionManager.paused = self.paused
+            if hasattr(self.meteo_manager, 'set_paused'):
+                self.meteo_manager.set_paused(self.paused)
+
+        # Pause landing view (toujours respectée)
+        self.landing_view.global_paused = self.paused
+
         self.btn_pause.setText("Reprendre" if self.paused else "Pause")
 
     def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
@@ -416,16 +423,23 @@ class MainGameWindow(QMainWindow):
                 self.widget_carte.planes.remove(plane)
                 self.widget_carte.avion_updated.emit(plane)
 
-        # mettre le jeu en pause sauf la piste
-        self.paused = True
-        self.widget_carte.set_paused(True)  # GameWidget s'arrête
+        # 🔹 Mettre la carte en pause mais sans toucher à paused global
+        self.widget_carte.set_paused(True)
         CollisionManager.paused = True
         if hasattr(self.meteo_manager, 'set_paused'):
             self.meteo_manager.set_paused(True)
 
-        # Activer le mode "ground plane" pour que landing_view fonctionne
+        # Activer la landing view
         self.landing_view.activate_ground_plane("Images/avion_attente.png")
         self.control_ground_mode = True  # flag pour updates clavier et boutons
+
+        # désélectionner l'avion
+        self.widget_carte.selected_plane = None
+        self.widget_carte.avion_selectionne_changed.emit(None)
+
+        # Activer la landing view, mais **ne pas bloquer la pause globale**
+        self.landing_view.activate_ground_plane("Images/avion_attente.png")
+        self.control_ground_mode = True
 
         # désélectionner l'avion
         self.widget_carte.selected_plane = None
