@@ -106,6 +106,7 @@ class MainGameWindow(QMainWindow):
 
         # Carte et météo
         self.landing_view = LandingView()
+        self.landing_view.landing_finished_callback = self.on_landing_finished
         self.widget_carte = GameWidget()
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.meteo_manager = self.widget_carte.meteo_manager
@@ -400,44 +401,44 @@ class MainGameWindow(QMainWindow):
     def on_atterrir_clicked(self):
         """Gérer l'atterrissage :
         - supprimer l'avion sélectionné de la carte et de la liste
-        - verrouiller la landing view avec l'image avion (en haut à gauche)
+        - verrouiller la landing view avec l'image avion
+        - mettre le jeu en pause sauf la landing view
         """
         plane = getattr(self.widget_carte, "selected_plane", None)
         if not plane:
             return
 
-        # supprimer l'avion de la carte (GameWidget.remove_plane gère aussi l'émission avion_updated)
+        # supprimer l'avion de la carte
         try:
             self.widget_carte.remove_plane(plane)
         except Exception:
-            # fallback : retirer manuellement si remove_plane n'est pas accessible
-            try:
-                if plane in self.widget_carte.planes:
-                    self.widget_carte.planes.remove(plane)
-                    self.widget_carte.avion_updated.emit(plane)
-            except Exception:
-                pass
+            if plane in self.widget_carte.planes:
+                self.widget_carte.planes.remove(plane)
+                self.widget_carte.avion_updated.emit(plane)
 
-        # La liste est mise à jour via update_plane_list_item lorsque avion_updated est émis.
-        # Verrouiller la landing view en piste + overlay avion en haut à gauche
-        try:
-            # si tu veux utiliser l'overlay par défaut (Images/avion_attente.png) :
-            self.landing_view.activate_ground_plane("Images/avion_attente.png")
-        except Exception:
-            # si la méthode n'existe pas (sécurité) : forcer piste avion
-            try:
-                self.landing_view.locked = True
-                self.landing_view.current_pixmap = self.landing_view.pixmap_avion
-                self.landing_view._apply_current_pixmap()
-            except Exception:
-                pass
+        # mettre le jeu en pause sauf la piste
+        self.paused = True
+        self.widget_carte.set_paused(True)  # GameWidget s'arrête
+        CollisionManager.paused = True
+        if hasattr(self.meteo_manager, 'set_paused'):
+            self.meteo_manager.set_paused(True)
 
-        # s'assurer qu'aucun avion n'est sélectionné maintenant
+        # Activer le mode "ground plane" pour que landing_view fonctionne
+        self.landing_view.activate_ground_plane("Images/avion_attente.png")
+        self.control_ground_mode = True  # flag pour updates clavier et boutons
+
+        # désélectionner l'avion
         self.widget_carte.selected_plane = None
-        # émettre signal sélection changé
         self.widget_carte.avion_selectionne_changed.emit(None)
 
-        self.control_ground_mode = True
+    def on_landing_finished(self):
+        """Reprendre le jeu après que l'avion ait fini l'atterrissage"""
+        self.control_ground_mode = False
+        self.paused = False
+        self.widget_carte.set_paused(False)
+        CollisionManager.paused = False
+        if hasattr(self.meteo_manager, 'set_paused'):
+            self.meteo_manager.set_paused(False)
 
     def mettre_a_jour_message_defilant(self):
         if len(self.meteo_manager.evenements_actifs) > 0:
@@ -446,31 +447,8 @@ class MainGameWindow(QMainWindow):
             self.label_message.setText("Rien à signaler")
 
     def keyPressEvent(self, event):
-        print("Touche détectée :", event.key())
-
-        if self.widget_carte.selected_plane is None:
-            return
-
-        plane = self.widget_carte.selected_plane
-
-        if event.key() == Qt.Key_Left:
-            plane.avion.gauche()
-            self.widget_carte._update_velocity_from_cap(plane)
-
-        elif event.key() == Qt.Key_Right:
-            plane.avion.droite()
-            self.widget_carte._update_velocity_from_cap(plane)
-
-        elif event.key() == Qt.Key_Up:
-            plane.avion.monter()
-
-        elif event.key() == Qt.Key_Down:
-            plane.avion.descendre()
-
-        self.widget_carte.update()
-        self.update_plane_list_item(plane)
-
-        if self.control_ground_mode:
+        # 🔹 si on est en mode ground plane (atterrissage), gérer la piste
+        if getattr(self, "control_ground_mode", False):
             if event.key() == Qt.Key_Up:
                 self.landing_view.move_ground_plane(dy=-10)
             elif event.key() == Qt.Key_Down:
@@ -480,6 +458,25 @@ class MainGameWindow(QMainWindow):
             elif event.key() == Qt.Key_Right:
                 self.landing_view.move_ground_plane(dx=10)
             return
+
+        # sinon, contrôle avion normal
+        plane = self.widget_carte.selected_plane
+        if plane is None:
+            return
+
+        if event.key() == Qt.Key_Left:
+            plane.avion.gauche()
+            self.widget_carte._update_velocity_from_cap(plane)
+        elif event.key() == Qt.Key_Right:
+            plane.avion.droite()
+            self.widget_carte._update_velocity_from_cap(plane)
+        elif event.key() == Qt.Key_Up:
+            plane.avion.monter()
+        elif event.key() == Qt.Key_Down:
+            plane.avion.descendre()
+
+        self.widget_carte.update()
+        self.update_plane_list_item(plane)
 
     def update_stats(self):
         nb = len(self.widget_carte.planes)

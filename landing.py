@@ -132,7 +132,7 @@ class LandingView(QLabel):
         self.ground_x += dx
         self.ground_y += dy
 
-        # 🔥 ajuster limites pour avion plus grand
+        # limites
         max_x = self.pixmap_avion.width() - int(self.plane_overlay.width() * self.ground_scale)
         max_y = self.pixmap_avion.height() - int(self.plane_overlay.height() * self.ground_scale)
 
@@ -140,3 +140,17 @@ class LandingView(QLabel):
         self.ground_y = max(0, min(self.ground_y, max_y))
 
         self.update_ground_plane()
+
+        # 🔹 Check si l'avion atteint le bas
+        if self.ground_y >= max_y:
+            self.finish_landing()
+
+    def finish_landing(self):
+        self.ground_plane_active = False
+        self.locked = False
+        self.current_pixmap = self.pixmap_attente
+        self._apply_current_pixmap()
+
+        # 🔹 Émettre un signal pour informer MainGameWindow
+        if hasattr(self, "landing_finished_callback") and callable(self.landing_finished_callback):
+            self.landing_finished_callback()
