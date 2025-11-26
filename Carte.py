@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QTimer, QPointF, Signal
 from PySide6.QtGui import QPainter, QColor, QFont, QPen, QPixmap, QImage, QTransform
 from PySide6.QtWidgets import QWidget
 from Avions import Avions
-
+from collision_meteo import CollisionManager
 
 # Classe : Avion en mouvement
 class MovingPlane:
@@ -110,6 +110,7 @@ class MovingPlane:
     def is_in_attente(self):
         return not self.is_blinking() and self.avion.fuel > 5
 
+from meteo import MeteoManager
 
 # Classe : Widget de jeu
 class GameWidget(QWidget):
@@ -118,7 +119,7 @@ class GameWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Avions - Triangles orientés")
+        self.setWindowTitle("Avions orientés")
         self.resize(800, 600)
 
         # Variables principales
@@ -130,6 +131,9 @@ class GameWidget(QWidget):
 
         # Ajouter un avion initial
         self.add_plane()
+        self.meteo_manager = MeteoManager(self)
+
+        self.collision_manager = CollisionManager(self, self.meteo_manager)
 
         # Timer de mise à jour
         self.timer = QTimer(self)

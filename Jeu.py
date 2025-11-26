@@ -96,7 +96,7 @@ class MainGameWindow(QMainWindow):
         self.landing_view = LandingView()
         self.widget_carte = GameWidget()
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.meteo_manager = MeteoManager(self.widget_carte)
+        self.meteo_manager = self.widget_carte.meteo_manager
 
         self.carte_box = QGroupBox()
         self.carte_box.setFlat(True)

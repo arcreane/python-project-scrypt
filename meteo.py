@@ -1,7 +1,7 @@
 # meteo.py
 import random
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import QTimer, Qt, QRectF, Signal, QObject
+from PySide6.QtCore import QTimer, Qt, QRectF, Signal, QObject, QPointF
 from PySide6.QtGui import QPixmap
 
 class MeteoManager(QObject):
@@ -96,7 +96,24 @@ class MeteoManager(QObject):
     def get_evenements_actifs(self):
         return [(e["rect"], e["type"]) for e in self.evenements_actifs]
 
-    def verifier_collisions(self, planes, selected_plane):
-        evenements = self.get_evenements_actifs()
-        from collision_meteo import CollisionManager
-        CollisionManager.check_collision_et_evitement(planes, selected_plane, evenements)
+    def get_conditions(self):
+        """
+        Fournit une liste simplifiée des événements météo,
+        compatible avec CollisionManager.
+        """
+        conditions = []
+        for e in self.evenements_actifs:
+            rect = e["rect"]
+            cx = rect.x() + rect.width() / 2
+            cy = rect.y() + rect.height() / 2
+            radius = max(rect.width(), rect.height()) / 2
+
+            class MeteoCond:
+                pass
+
+            obj = MeteoCond()
+            obj.pos = QPointF(cx, cy)
+            obj.radius = radius
+            conditions.append(obj)
+
+        return conditions

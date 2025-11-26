@@ -1,56 +1,69 @@
+# collision_meteo.py
 import math
-from PySide6.QtCore import QRectF
+from PySide6.QtCore import QObject, QTimer, QDateTime, QPointF
 
-class CollisionManager:
+class CollisionManager(QObject):
+    """
+    Vérifie périodiquement les collisions entre les avions
+    et les événements météo, et applique une manœuvre d'évitement.
+    """
     paused = False
-    @staticmethod
-    def check_collision_et_evitement(planes, selected_plane, evenements):
+
+    def __init__(self, game_widget, meteo_manager, interval_ms=60, avoid_duration_ms=900):
+        super().__init__(game_widget)
+        self.game_widget = game_widget
+        self.meteo_manager = meteo_manager
+        self.avoid_duration_ms = avoid_duration_ms
+        self._avoid_until = {}  # plane -> timestamp fin d'évitement
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._tick)
+        self.timer.start(interval_ms)
+
+    def _tick(self):
         if CollisionManager.paused:
             return
-        """
-        planes : liste de MovingPlane
-        selected_plane : l'avion sélectionné ou None
-        evenements : liste de tuples (QRectF, type)
-        """
-        for p in planes:
-            # ---------------- Avion sélectionné ----------------
-            if p is selected_plane:
-                for event_rect, event_type in evenements:
-                    plane_rect = QRectF(
-                        p.pos.x() - p.size, p.pos.y() - p.size,
-                        p.size * 2, p.size * 2
-                    )
-                    if plane_rect.intersects(event_rect):
-                        print(f"Game Over ! Collision avec {event_type}")
-                        # ⚡ Bloquer l'avion immédiatement
-                        p.vx = 0
-                        p.vy = 0
-                        p.avion.vitesse = 0
-                        # ⚡ Optionnel : tu peux ajouter un flag pour game over
-                        break
-                continue  # ne teste pas la fuite pour l'avion sélectionné
 
-            # ---------------- Avions non sélectionnés → fuite ----------------
-            plane_rect = QRectF(
-                p.pos.x() - p.size, p.pos.y() - p.size,
-                p.size * 2, p.size * 2
-            )
+        now = QDateTime.currentMSecsSinceEpoch()
+        conditions = self.meteo_manager.get_conditions()
 
-            for event_rect, event_type in evenements:
-                if plane_rect.intersects(event_rect):
-                    # Centre de l'événement
-                    center_evt = event_rect.center()
-                    dx = p.pos.x() - center_evt.x()
-                    dy = p.pos.y() - center_evt.y()
+        for plane in self.game_widget.planes:
+            if getattr(plane.avion, "fuel", 1) <= 0:
+                continue  # avion arrêté
 
-                    # Évite division par zéro si l'avion est exactement au centre
-                    if dx == 0 and dy == 0:
-                        dx, dy = 1, 0
+            if self._avoid_until.get(plane, 0) > now:
+                continue  # déjà en évitement
 
-                    # Calcul de l'angle de fuite
-                    angle = math.atan2(dy, dx)
-                    p.avion.cap = (math.degrees(angle) + 90) % 360
+            for cond in conditions:
+                if self._intersects_plane(cond, plane):
+                    self._apply_avoidance(plane, cond)
+                    self._avoid_until[plane] = now + self.avoid_duration_ms
+                    break
 
-                    # Mettre à jour vx et vy selon le nouveau cap
-                    p.update_velocity_from_cap()
-                    break  # une seule fuite par événement détecté
+    def _intersects_plane(self, cond, plane):
+        try:
+            center = getattr(cond, "pos", QPointF(0, 0))
+            radius = getattr(cond, "radius", 40.0)
+            dx = plane.pos.x() - center.x()
+            dy = plane.pos.y() - center.y()
+            dist2 = dx*dx + dy*dy
+            threshold = (radius + getattr(plane, "size", 20))**2
+            return dist2 <= threshold
+        except Exception:
+            return False
+
+    def _apply_avoidance(self, plane, cond):
+        try:
+            center = getattr(cond, "pos", QPointF(0,0))
+            vx = plane.pos.x() - center.x()
+            vy = plane.pos.y() - center.y()
+            if vx == 0 and vy == 0:
+                vx, vy = 1.0, 0.0
+
+            angle_rad = math.atan2(vy, vx)
+            new_cap = (math.degrees(angle_rad) + 90) % 360
+            plane.avion.cap = new_cap
+            plane.update_velocity_from_cap()
+        except Exception:
+            pass
+
