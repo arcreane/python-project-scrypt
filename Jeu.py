@@ -1,9 +1,10 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
-    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem
+    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar,
 )
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QPalette, QColor
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 # Modules du projet
@@ -24,6 +25,8 @@ class MainGameWindow(QMainWindow):
         self.paused = False
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocus()
 
         # Initialisation des composants
         self.init_top_bar()
@@ -33,6 +36,8 @@ class MainGameWindow(QMainWindow):
         self.init_main_layout()
         self.init_connections()
         self.init_music()
+
+        self.update_stats()
 
     # Barre du haut
     def init_top_bar(self):
@@ -89,7 +94,14 @@ class MainGameWindow(QMainWindow):
         self.label_stats.setFrameShape(QLabel.Panel)
         self.label_stats.setAlignment(Qt.AlignCenter)
 
-        self.label_message = MarqueeLabel("Rien à signaler")
+        # Modifier la police pour qu'elle soit plus grosse et en gras
+        font_stats = self.label_stats.font()
+        font_stats.setPointSize(24)  # taille plus grande
+        font_stats.setBold(True)
+        self.label_stats.setFont(font_stats)
+        self.label_stats.setStyleSheet("color: #A3C1DA;")
+
+        self.label_message = MarqueeLabel("Rien à signaler")  # message défilant
         self.label_message.setFixedHeight(40)
 
         # Carte et météo
@@ -272,6 +284,13 @@ class MainGameWindow(QMainWindow):
         if hasattr(self.meteo_manager, 'set_paused'):
             self.meteo_manager.set_paused(self.paused)
         self.btn_pause.setText("Reprendre" if self.paused else "Pause")
+        self.btn_pause.setText("Reprendre" if self.paused else "Pause")
+
+    def lerp_color(self, c1, c2, t):
+        r = int(c1[0] + (c2[0] - c1[0]) * t)
+        g = int(c1[1] + (c2[1] - c1[1]) * t)
+        b = int(c1[2] + (c2[2] - c1[2]) * t)
+        return (r, g, b)
 
     def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
         value = max(0, min(value, maximum))
@@ -314,6 +333,7 @@ class MainGameWindow(QMainWindow):
                 self.bar_altitude.setValue(0)
                 self.bar_vitesse.setValue(0)
                 self.bar_fuel.setValue(0)
+            self.update_stats()
             return
 
         for i in range(self.liste_avions.count()):
@@ -337,6 +357,8 @@ class MainGameWindow(QMainWindow):
                 self.compass.set_cap(plane.avion.cap)
             except Exception:
                 pass
+
+        self.update_stats()
 
     def on_liste_avion_selected(self, current, previous):
         if current:
@@ -399,6 +421,59 @@ class MainGameWindow(QMainWindow):
         self.menu_window = Window()
         self.menu_window.showFullScreen()
         self.close()
+
+    def mettre_a_jour_message_defilant(self):
+        if len(self.meteo_manager.evenements_actifs) > 0:
+            self.label_message.setText("ATTENTION – dangers météorologiques!")
+        else:
+            self.label_message.setText("Rien à signaler")
+
+    def keyPressEvent(self, event):
+        print("Touche détectée :", event.key())
+
+        if self.widget_carte.selected_plane is None:
+            return
+
+        plane = self.widget_carte.selected_plane
+
+        if event.key() == Qt.Key_Left:
+            plane.avion.gauche()
+            self.widget_carte._update_velocity_from_cap(plane)
+
+        elif event.key() == Qt.Key_Right:
+            plane.avion.droite()
+            self.widget_carte._update_velocity_from_cap(plane)
+
+        elif event.key() == Qt.Key_Up:
+            plane.avion.monter()
+
+        elif event.key() == Qt.Key_Down:
+            plane.avion.descendre()
+
+        self.widget_carte.update()
+        self.update_plane_list_item(plane)
+
+    def update_stats(self):
+        nb = len(self.widget_carte.planes)
+        self.label_stats.setText(f"Avions présents : {nb}")
+
+    def accelerer_avion(self):
+        plane = self.widget_carte.selected_plane
+        if plane is not None:
+            # Augmente la vitesse, par exemple de 50 km/h
+            plane.avion.vitesse = min(plane.avion.vitesse + 50, 900)  # 900 km/h max
+            self.widget_carte._update_velocity_from_cap(plane)
+            self.update_plane_list_item(plane)
+            self.widget_carte.update()
+
+    def ralentir_avion(self):
+        plane = self.widget_carte.selected_plane
+        if plane is not None:
+            # Diminue la vitesse, par exemple de 50 km/h
+            plane.avion.vitesse = max(plane.avion.vitesse - 50, 0)  # vitesse min 0
+            self.widget_carte._update_velocity_from_cap(plane)
+            self.update_plane_list_item(plane)
+            self.widget_carte.update()
 
 
 if __name__ == "__main__":
