@@ -13,10 +13,10 @@ class MeteoManager(QObject):
         self.paused = False
 
         self.evenements = {
-            "typhon": "images/typhon.png",
-            "givre": "images/givre.png",
-            "foudre": "images/foudre.png",
-            "volcan": "images/volcan.png"
+            "typhon": "images/Meteo_typhon.png",
+            "givre": "images/Meteo_givre.png",
+            "foudre": "images/Meteo_foudre.png",
+            "volcan": "images/Meteo_volcan.png"
         }
 
         self.tailles = {
