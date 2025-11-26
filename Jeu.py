@@ -14,6 +14,7 @@ from landing import LandingView
 from collision_meteo import CollisionManager
 from Informations_avion import ContouredLabel, ContouredProgressBar, ContouredCompass
 from esthetisme_avion_layout import style_layout_avions
+from esthetisme_instructions_layout import style_layout_instructions
 
 
 
@@ -217,6 +218,7 @@ class MainGameWindow(QMainWindow):
         layout_instructions.addWidget(self.btn_ralentir)
         self.group_instructions.setLayout(layout_instructions)
         self.group_instructions.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        style_layout_instructions(self.group_instructions, max_height=400)
 
     # Layout principal
     def init_main_layout(self):
