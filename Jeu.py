@@ -167,6 +167,11 @@ class MainGameWindow(QMainWindow):
         self.btn_attente.clicked.connect(self.widget_carte.attente_selected)
         self.btn_atterrir.clicked.connect(self.on_atterrir_clicked)
 
+        self.btn_monter.clicked.connect(lambda: self.landing_view.move_ground_plane(dy=-10))
+        self.btn_descendre.clicked.connect(lambda: self.landing_view.move_ground_plane(dy=10))
+        self.btn_gauche.clicked.connect(lambda: self.landing_view.move_ground_plane(dx=-10))
+        self.btn_droite.clicked.connect(lambda: self.landing_view.move_ground_plane(dx=10))
+
         # Infos avion et boussole
         self.label_nom_avion = ContouredLabel("Sélectionner un avion")
         self.label_nom_avion.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -417,7 +422,7 @@ class MainGameWindow(QMainWindow):
         # Verrouiller la landing view en piste + overlay avion en haut à gauche
         try:
             # si tu veux utiliser l'overlay par défaut (Images/avion_attente.png) :
-            self.landing_view.lock_with_plane_overlay(overlay_path="Images/avion_attente.png", position="topleft")
+            self.landing_view.activate_ground_plane("Images/avion_attente.png")
         except Exception:
             # si la méthode n'existe pas (sécurité) : forcer piste avion
             try:
@@ -431,6 +436,8 @@ class MainGameWindow(QMainWindow):
         self.widget_carte.selected_plane = None
         # émettre signal sélection changé
         self.widget_carte.avion_selectionne_changed.emit(None)
+
+        self.control_ground_mode = True
 
     def mettre_a_jour_message_defilant(self):
         if len(self.meteo_manager.evenements_actifs) > 0:
@@ -462,6 +469,17 @@ class MainGameWindow(QMainWindow):
 
         self.widget_carte.update()
         self.update_plane_list_item(plane)
+
+        if self.control_ground_mode:
+            if event.key() == Qt.Key_Up:
+                self.landing_view.move_ground_plane(dy=-10)
+            elif event.key() == Qt.Key_Down:
+                self.landing_view.move_ground_plane(dy=10)
+            elif event.key() == Qt.Key_Left:
+                self.landing_view.move_ground_plane(dx=-10)
+            elif event.key() == Qt.Key_Right:
+                self.landing_view.move_ground_plane(dx=10)
+            return
 
     def update_stats(self):
         nb = len(self.widget_carte.planes)
