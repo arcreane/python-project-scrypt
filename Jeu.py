@@ -13,6 +13,8 @@ from meteo import MeteoManager
 from landing import LandingView
 from collision_meteo import CollisionManager
 from Informations_avion import ContouredLabel, ContouredProgressBar, ContouredCompass
+from esthetisme_avion_layout import style_layout_avions
+
 
 
 class MainGameWindow(QMainWindow):
@@ -117,6 +119,8 @@ class MainGameWindow(QMainWindow):
         layout_avions = QVBoxLayout()
         layout_avions.addWidget(self.liste_avions)
         self.group_avions.setLayout(layout_avions)
+
+        style_layout_avions(self.group_avions, self.liste_avions, max_height=400)
 
     # Groupe Contrôles
     def init_avion_controls(self):
