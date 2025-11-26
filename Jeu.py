@@ -165,7 +165,7 @@ class MainGameWindow(QMainWindow):
         self.btn_ralentir.clicked.connect(self.widget_carte.ralentir_selected)
         self.btn_urgence.clicked.connect(self.widget_carte.urgence_selected)
         self.btn_attente.clicked.connect(self.widget_carte.attente_selected)
-        self.btn_atterrir.clicked.connect(self.atterrir_clicked)
+        self.btn_atterrir.clicked.connect(self.on_atterrir_clicked)
 
         # Infos avion et boussole
         self.label_nom_avion = ContouredLabel("Sélectionner un avion")
@@ -286,12 +286,6 @@ class MainGameWindow(QMainWindow):
         self.btn_pause.setText("Reprendre" if self.paused else "Pause")
         self.btn_pause.setText("Reprendre" if self.paused else "Pause")
 
-    def lerp_color(self, c1, c2, t):
-        r = int(c1[0] + (c2[0] - c1[0]) * t)
-        g = int(c1[1] + (c2[1] - c1[1]) * t)
-        b = int(c1[2] + (c2[2] - c1[2]) * t)
-        return (r, g, b)
-
     def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
         value = max(0, min(value, maximum))
         bar.setMaximum(maximum)
@@ -398,21 +392,45 @@ class MainGameWindow(QMainWindow):
                 self.liste_avions.setCurrentItem(item)
                 return
 
-    def atterrir_clicked(self):
-        plane = self.widget_carte.atterrir_selected()
-        if plane:
-            # Retirer de la liste
-            for i in range(self.liste_avions.count()):
-                item = self.liste_avions.item(i)
-                if item.data(Qt.UserRole) == plane:
-                    self.liste_avions.takeItem(i)
-                    break
+    def on_atterrir_clicked(self):
+        """Gérer l'atterrissage :
+        - supprimer l'avion sélectionné de la carte et de la liste
+        - verrouiller la landing view avec l'image avion (en haut à gauche)
+        """
+        plane = getattr(self.widget_carte, "selected_plane", None)
+        if not plane:
+            return
 
-            # Afficher l'avion sur la piste
+        # supprimer l'avion de la carte (GameWidget.remove_plane gère aussi l'émission avion_updated)
+        try:
+            self.widget_carte.remove_plane(plane)
+        except Exception:
+            # fallback : retirer manuellement si remove_plane n'est pas accessible
             try:
-                self.landing_view.show_plane("Images/avion_attente.png")
-            except Exception as e:
-                print("Erreur affichage avion atterrissage :", e)
+                if plane in self.widget_carte.planes:
+                    self.widget_carte.planes.remove(plane)
+                    self.widget_carte.avion_updated.emit(plane)
+            except Exception:
+                pass
+
+        # La liste est mise à jour via update_plane_list_item lorsque avion_updated est émis.
+        # Verrouiller la landing view en piste + overlay avion en haut à gauche
+        try:
+            # si tu veux utiliser l'overlay par défaut (Images/avion_attente.png) :
+            self.landing_view.lock_with_plane_overlay(overlay_path="Images/avion_attente.png", position="topleft")
+        except Exception:
+            # si la méthode n'existe pas (sécurité) : forcer piste avion
+            try:
+                self.landing_view.locked = True
+                self.landing_view.current_pixmap = self.landing_view.pixmap_avion
+                self.landing_view._apply_current_pixmap()
+            except Exception:
+                pass
+
+        # s'assurer qu'aucun avion n'est sélectionné maintenant
+        self.widget_carte.selected_plane = None
+        # émettre signal sélection changé
+        self.widget_carte.avion_selectionne_changed.emit(None)
 
     def mettre_a_jour_message_defilant(self):
         if len(self.meteo_manager.evenements_actifs) > 0:
