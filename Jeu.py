@@ -414,14 +414,6 @@ class MainGameWindow(QMainWindow):
             except Exception as e:
                 print("Erreur affichage avion atterrissage :", e)
 
-    def retour_menu(self):
-        if self.player:
-            self.player.stop()
-        from Accueil import Window
-        self.menu_window = Window()
-        self.menu_window.showFullScreen()
-        self.close()
-
     def mettre_a_jour_message_defilant(self):
         if len(self.meteo_manager.evenements_actifs) > 0:
             self.label_message.setText("ATTENTION – dangers météorologiques!")
@@ -457,23 +449,13 @@ class MainGameWindow(QMainWindow):
         nb = len(self.widget_carte.planes)
         self.label_stats.setText(f"Avions présents : {nb}")
 
-    def accelerer_avion(self):
-        plane = self.widget_carte.selected_plane
-        if plane is not None:
-            # Augmente la vitesse, par exemple de 50 km/h
-            plane.avion.vitesse = min(plane.avion.vitesse + 50, 900)  # 900 km/h max
-            self.widget_carte._update_velocity_from_cap(plane)
-            self.update_plane_list_item(plane)
-            self.widget_carte.update()
-
-    def ralentir_avion(self):
-        plane = self.widget_carte.selected_plane
-        if plane is not None:
-            # Diminue la vitesse, par exemple de 50 km/h
-            plane.avion.vitesse = max(plane.avion.vitesse - 50, 0)  # vitesse min 0
-            self.widget_carte._update_velocity_from_cap(plane)
-            self.update_plane_list_item(plane)
-            self.widget_carte.update()
+    def retour_menu(self):
+        if self.player:
+            self.player.stop()
+        from Accueil import Window
+        self.menu_window = Window()
+        self.menu_window.showFullScreen()
+        self.close()
 
 
 if __name__ == "__main__":
