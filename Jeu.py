@@ -153,6 +153,7 @@ class MainGameWindow(QMainWindow):
         self.btn_ralentir.clicked.connect(self.widget_carte.ralentir_selected)
         self.btn_urgence.clicked.connect(self.widget_carte.urgence_selected)
         self.btn_attente.clicked.connect(self.widget_carte.attente_selected)
+        self.btn_atterrir.clicked.connect(self.atterrir_clicked)
 
         # Infos avion et boussole
         self.label_nom_avion = ContouredLabel("Sélectionner un avion")
@@ -374,6 +375,22 @@ class MainGameWindow(QMainWindow):
             if item.data(Qt.UserRole).avion == avion:
                 self.liste_avions.setCurrentItem(item)
                 return
+
+    def atterrir_clicked(self):
+        plane = self.widget_carte.atterrir_selected()
+        if plane:
+            # Retirer de la liste
+            for i in range(self.liste_avions.count()):
+                item = self.liste_avions.item(i)
+                if item.data(Qt.UserRole) == plane:
+                    self.liste_avions.takeItem(i)
+                    break
+
+            # Afficher l'avion sur la piste
+            try:
+                self.landing_view.show_plane("Images/avion_attente.png")
+            except Exception as e:
+                print("Erreur affichage avion atterrissage :", e)
 
     def retour_menu(self):
         if self.player:

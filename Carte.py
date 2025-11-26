@@ -284,6 +284,16 @@ class GameWidget(QWidget):
         self.mode_highlight = None
         self.update()
 
+    def atterrir_selected(self):
+        """Retire l’avion sélectionné de la carte et le renvoie."""
+        if self.selected_plane:
+            plane = self.selected_plane
+            self.selected_plane = None
+            self.planes.remove(plane)
+            self.avion_selectionne_changed.emit(None)
+            return plane
+        return None
+
     # Méthodes internes
     def _apply_to_selected(self, action, update_velocity=False):
         """Applique une action à l’avion sélectionné"""
