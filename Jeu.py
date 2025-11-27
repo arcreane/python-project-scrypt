@@ -502,6 +502,9 @@ class MainGameWindow(QMainWindow):
         if hasattr(self.meteo_manager, 'set_paused'):
             self.meteo_manager.set_paused(True)
 
+        # Forcer le focus clavier sur la landing view
+        self.landing_view.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
+
         QTimer.singleShot(50, lambda: setattr(self, "suppress_auto_selection", False))
 
     def on_landing_finished(self):
