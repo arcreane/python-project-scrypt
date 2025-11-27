@@ -453,25 +453,32 @@ class MainGameWindow(QMainWindow):
         if not plane:
             return
 
-        # --- empêcher que la suppression provoque une auto-sélection ---
+        # --- activer d'abord le plan d'atterrissage ---
+        self.landing_view.activate_ground_plane("Images/avion_attente.png")
+        self.control_ground_mode = True
+        self.label_nom_avion.setText("Avion au sol")
+        self.bar_altitude.setValue(0)
+        self.bar_vitesse.setValue(0)
+        self.bar_fuel.setValue(0)
+        try:
+            self.compass.set_cap(0)
+        except Exception:
+            pass
+
+        # --- ensuite, empêcher que la suppression provoque une auto-sélection ---
         self.suppress_auto_selection = True
-        # bloquer signaux de la QListWidget pour éviter callbacks
         self.liste_avions.blockSignals(True)
         try:
-            # 1) désélectionner immédiatement (UI)
             self.liste_avions.clearSelection()
             try:
                 self.liste_avions.setCurrentItem(None)
             except Exception:
                 pass
 
-            # 2) Forcer la désélection côté carte
             self.widget_carte.selected_plane = None
             try:
-                # si GameWidget fournit une méthode de suppression propre (émets avion_updated)
                 self.widget_carte.remove_plane(plane)
             except Exception:
-                # fallback : suppression manuelle et émission
                 if plane in self.widget_carte.planes:
                     self.widget_carte.planes.remove(plane)
                     try:
@@ -482,38 +489,19 @@ class MainGameWindow(QMainWindow):
             self.widget_carte.update()
             QApplication.processEvents()
 
-            # 3) informer explicitement la carte que plus aucun avion n'est sélectionné
             try:
                 self.widget_carte.avion_selectionne_changed.emit(None)
             except Exception:
                 pass
 
         finally:
-            # 4) réactiver signaux quel que soit le chemin d'erreur
             self.liste_avions.blockSignals(False)
 
-        # 5) mettre la carte / météo en pause (la landing view restera active)
         self.widget_carte.set_paused(True)
         CollisionManager.paused = True
         if hasattr(self.meteo_manager, 'set_paused'):
             self.meteo_manager.set_paused(True)
 
-        # 6) activer la landing view (piste) — maintenant que l'avion n'est plus sélectionné sur la carte
-        self.landing_view.activate_ground_plane("Images/avion_attente.png")
-        self.control_ground_mode = True
-
-        # 7) mettre à jour l'UI des infos (vide)
-        self.landing_view.update_ground_plane()
-        self.label_nom_avion.setText("Avion au sol")
-        self.bar_altitude.setValue(0)
-        self.bar_vitesse.setValue(0)
-        self.bar_fuel.setValue(0)
-        try:
-            self.compass.set_cap(0)
-        except Exception:
-            pass
-
-        # 8) laisser un petit délai avant de réactiver l'auto-selection pour éviter tout race condition
         QTimer.singleShot(50, lambda: setattr(self, "suppress_auto_selection", False))
 
     def on_landing_finished(self):

@@ -30,6 +30,9 @@ class LandingView(QLabel):
     def set_selected_plane(self, plane):
         if self.locked:
             return
+        if getattr(self, "ground_plane_active", False):
+            # Si un avion est en train d'atterrir, ne pas changer le fond
+            return
         if plane is None:
             self.current_pixmap = self.pixmap_attente
         else:
