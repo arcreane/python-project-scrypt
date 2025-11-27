@@ -399,41 +399,26 @@ class MainGameWindow(QMainWindow):
         self.update_stats()
 
     def on_liste_avion_selected(self, current, previous):
-        if getattr(self, "suppress_auto_selection", False):
+        # Si on bloque la sélection (suppression en cours) ET qu'il s'agit d'une désélection (current is None),
+        # on ignore cet événement. Si current n'est pas None (l'utilisateur clique), on accepte la sélection.
+        if getattr(self, "suppress_auto_selection", False) and current is None:
             return
-
-        if current is None:
-            # L'utilisateur a désélectionné l'avion
-            self.widget_carte.selected_plane = None
-            self.landing_view.set_selected_plane(None)
-            self.label_nom_avion.setText("Sélectionner un avion")
-            self.bar_altitude.setValue(0)
-            self.bar_vitesse.setValue(0)
-            self.bar_fuel.setValue(0)
+        if current:
+            plane = current.data(Qt.UserRole)
+            self.widget_carte.selected_plane = plane
+            self.landing_view.set_selected_plane(plane)
+            self.widget_carte.update()
+            self.update_plane_list_item(plane)
+            self.label_nom_avion.setText(plane.avion.nom)
             try:
-                self.compass.set_cap(0)
+                self.compass.set_cap(plane.avion.cap)
             except Exception:
                 pass
-            return
-
-        # Sinon, un avion est sélectionné
-        plane = current.data(Qt.UserRole)
-        self.widget_carte.selected_plane = plane
-        self.landing_view.set_selected_plane(plane)
-        self.widget_carte.update()
-        self.update_plane_list_item(plane)
-        self.label_nom_avion.setText(plane.avion.nom)
-        try:
-            self.compass.set_cap(plane.avion.cap)
-        except Exception:
-            pass
 
     def on_carte_avion_selected(self, avion):
         if getattr(self, "suppress_auto_selection", False):
             return
-
         if avion is None:
-            # Désélection volontaire depuis la carte
             self.label_nom_avion.setText("Sélectionner un avion")
             self.bar_altitude.setValue(0)
             self.bar_vitesse.setValue(0)
@@ -443,11 +428,7 @@ class MainGameWindow(QMainWindow):
                 self.compass.set_cap(0)
             except Exception:
                 pass
-            # Désélectionner aussi dans la liste
-            self.liste_avions.setCurrentItem(None)
-            self.widget_carte.selected_plane = None
             return
-
         self.label_nom_avion.setText(avion.nom)
         self.update_plane_list_item(avion)
         self.landing_view.set_selected_plane(avion)
@@ -455,13 +436,11 @@ class MainGameWindow(QMainWindow):
             self.compass.set_cap(avion.cap)
         except Exception:
             pass
-
-        # Synchroniser la liste
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole).avion == avion:
                 self.liste_avions.setCurrentItem(item)
-                break
+                return
 
     def on_atterrir_clicked(self):
         """Gérer l'atterrissage :
