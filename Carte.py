@@ -305,3 +305,17 @@ class GameWidget(QWidget):
 
     def _update_velocity_from_cap(self, plane: MovingPlane):
         plane.update_velocity_from_cap()
+
+    def update_plane_position(self, plane):
+        """
+        Redessine uniquement l'avion passé en paramètre
+        pour que les touches soient instantanées.
+        """
+        if plane not in self.planes:
+            return
+
+        # Définir un rectangle autour de l'avion (zone à rafraîchir)
+        w = plane.size * 2
+        h = plane.size * 2
+        rect = plane.pos.toPoint().x() - plane.size, plane.pos.toPoint().y() - plane.size, w, h
+        self.update(*rect)

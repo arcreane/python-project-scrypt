@@ -548,7 +548,7 @@ class MainGameWindow(QMainWindow):
         elif event.key() == Qt.Key_Down:
             plane.avion.descendre()
 
-        self.widget_carte.update()
+        self.widget_carte.update_plane_position(plane)
         self.update_plane_list_item(plane)
 
     def update_stats(self):

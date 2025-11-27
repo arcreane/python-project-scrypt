@@ -1,4 +1,4 @@
-# landing.py
+# landing_optimized.py
 from PySide6.QtWidgets import QLabel, QSizePolicy
 from PySide6.QtGui import QPixmap, QPainter
 from PySide6.QtCore import Qt
@@ -8,12 +8,12 @@ class LandingView(QLabel):
         super().__init__()
         self.setAlignment(Qt.AlignCenter)
         self.setScaledContents(True)
-        # images de base
+
+        # Images de base
         self.pixmap_attente = QPixmap("Images/Piste_attente.png")
         self.pixmap_avion = QPixmap("Images/Piste_avion.png")
-        # image d'overlay pour l'avion posé
         self.plane_overlay = QPixmap("Images/avion_attente.png")
-        # état interne
+
         self.current_pixmap = self.pixmap_attente
         self.locked = False
         self.setPixmap(self.current_pixmap)
@@ -21,22 +21,21 @@ class LandingView(QLabel):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setMinimumSize(200, 150)
 
+        # État interne
         self.global_paused = False
         self.ground_plane_active = False
         self.ground_x = 20
         self.ground_y = 20
         self.ground_scale = 0.30
 
+        # Cache pour optimiser le redraw
+        self._overlay_cached = None
+        self._last_position = (-1, -1)
+
     def set_selected_plane(self, plane):
-        if self.locked:
+        if self.locked or self.ground_plane_active:
             return
-        if getattr(self, "ground_plane_active", False):
-            # Si un avion est en train d'atterrir, ne pas changer le fond
-            return
-        if plane is None:
-            self.current_pixmap = self.pixmap_attente
-        else:
-            self.current_pixmap = self.pixmap_avion
+        self.current_pixmap = self.pixmap_avion if plane else self.pixmap_attente
         self._apply_current_pixmap()
 
     def lock_with_plane_overlay(self, overlay_path=None, position="topleft"):
@@ -46,38 +45,7 @@ class LandingView(QLabel):
                 self.plane_overlay = overlay
 
         self.locked = True
-        base = self.pixmap_avion
-        composed = QPixmap(base.size())
-        composed.fill(Qt.transparent)
-        painter = QPainter(composed)
-        painter.drawPixmap(0, 0, base)
-
-        # 🔥 Redimensionnement plus grand
-        scale_factor = 0.50
-        ow = int(self.plane_overlay.width() * scale_factor)
-        oh = int(self.plane_overlay.height() * scale_factor)
-        overlay_small = self.plane_overlay.scaled(ow, oh, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-        bw, bh = base.width(), base.height()
-        margin = max(6, int(min(bw, bh) * 0.03))
-
-        if position == "topleft":
-            x = margin
-            y = margin
-        elif position == "topright":
-            x = bw - overlay_small.width() - margin
-            y = margin
-        elif position == "center":
-            x = (bw - overlay_small.width()) // 2
-            y = (bh - overlay_small.height()) // 2
-        else:
-            x = margin
-            y = margin
-
-        painter.drawPixmap(x, y, overlay_small)
-        painter.end()
-        self.current_pixmap = composed
-        self._apply_current_pixmap()
+        self._compose_overlay(position)
 
     def unlock(self):
         self.locked = False
@@ -98,42 +66,46 @@ class LandingView(QLabel):
         self._apply_current_pixmap()
         super().resizeEvent(event)
 
+    # --------------------------
+    # Gestion du ground plane
+    # --------------------------
     def activate_ground_plane(self, overlay_path="Images/avion_attente.png"):
         self.locked = True
-        self.plane_overlay = QPixmap(overlay_path)
         self.ground_plane_active = True
+        self.plane_overlay = QPixmap(overlay_path)
         self.ground_x = 20
         self.ground_y = 20
+        self._overlay_cached = None
+        self._last_position = (-1, -1)
         self.update_ground_plane()
 
     def update_ground_plane(self):
         if not self.ground_plane_active:
             return
 
-        base = self.pixmap_avion
-        composed = QPixmap(base.size())
-        composed.fill(Qt.transparent)
+        # Redessiner overlay seulement si la position a changé
+        if self._last_position != (self.ground_x, self.ground_y) or self._overlay_cached is None:
+            overlay_small = self.plane_overlay.scaled(
+                int(self.plane_overlay.width() * self.ground_scale),
+                int(self.plane_overlay.height() * self.ground_scale),
+                Qt.KeepAspectRatio,
+                Qt.FastTransformation
+            )
+            self._overlay_cached = overlay_small
+            self._last_position = (self.ground_x, self.ground_y)
+
+        # Composer l'image finale
+        composed = QPixmap(self.pixmap_avion)
         painter = QPainter(composed)
-        painter.drawPixmap(0, 0, base)
-
-        # 🔥 utiliser ground_scale augmenté
-        overlay_small = self.plane_overlay.scaled(
-            int(self.plane_overlay.width() * self.ground_scale),
-            int(self.plane_overlay.height() * self.ground_scale),
-            Qt.KeepAspectRatio, Qt.SmoothTransformation
-        )
-
-        painter.drawPixmap(self.ground_x, self.ground_y, overlay_small)
+        painter.drawPixmap(self.ground_x, self.ground_y, self._overlay_cached)
         painter.end()
 
         self.current_pixmap = composed
         self._apply_current_pixmap()
 
     def move_ground_plane(self, dx=0, dy=0):
-        if not self.ground_plane_active:
+        if not self.ground_plane_active or self.global_paused:
             return
-        if self.global_paused:
-            return  # ne bouge pas si Pause globale
 
         self.ground_x += dx
         self.ground_y += dy
@@ -155,6 +127,6 @@ class LandingView(QLabel):
         self.current_pixmap = self.pixmap_attente
         self._apply_current_pixmap()
 
-        # 🔹 Émettre un signal pour informer MainGameWindow
+        # Appel du callback
         if hasattr(self, "landing_finished_callback") and callable(self.landing_finished_callback):
             self.landing_finished_callback()
