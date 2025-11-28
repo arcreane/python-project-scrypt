@@ -264,6 +264,7 @@ class MainGameWindow(QMainWindow):
         self.liste_avions.currentItemChanged.connect(self.on_liste_avion_selected)
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
         self.widget_carte.avion_updated.connect(self.update_plane_list_item)
+        self.meteo_manager.evenements_changed.connect(self.mettre_a_jour_message_defilant)
 
     # Musique
     def init_music(self):

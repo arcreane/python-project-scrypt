@@ -100,3 +100,9 @@ class MeteoManager(QObject):
         evenements = self.get_evenements_actifs()
         from collision_meteo import CollisionManager
         CollisionManager.check_collision_et_evitement(planes, selected_plane, evenements)
+
+    def get_message_meteo(self):
+        if len(self.evenements_actifs) == 0:
+            return "Rien à signaler"
+        else:
+            return "⚠️ Conditions météorologiques dangereuses détectées !"
