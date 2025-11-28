@@ -61,7 +61,7 @@ class Window(QWidget):
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.player.setAudioOutput(self.audio_output)
-        self.player.setSource(QUrl.fromLocalFile("Musique_accueil.mp3"))
+        self.player.setSource(QUrl.fromLocalFile("Musiques/Musique_accueil.mp3"))
         self.audio_output.setVolume(0.5)
         self.player.play()
 

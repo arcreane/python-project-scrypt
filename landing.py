@@ -36,7 +36,7 @@ class LandingView(QLabel):
         self._last_position = (-1, -1)
 
         self.son_plouf = QSoundEffect()
-        self.son_plouf.setSource(QUrl.fromLocalFile("plouf.wav"))
+        self.son_plouf.setSource(QUrl.fromLocalFile("Musiques/plouf.wav"))
         self.son_plouf.setVolume(0.5)
 
     def set_selected_plane(self, plane):
