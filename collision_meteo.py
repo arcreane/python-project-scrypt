@@ -31,11 +31,21 @@ class CollisionManager(QObject):
             if getattr(plane.avion, "fuel", 1) <= 0:
                 continue  # avion arrêté
 
+            # S'il est en évitement : ne rien faire
             if self._avoid_until.get(plane, 0) > now:
-                continue  # déjà en évitement
+                continue
 
             for cond in conditions:
                 if self._intersects_plane(cond, plane):
+
+                    # 🔥 1) CAS SPÉCIAL : avion sélectionné → destruction immédiate
+                    if plane is self.game_widget.selected_plane:
+                        print("⚠ Avion sélectionné détruit par la météo")
+                        self.game_widget.remove_plane(plane)
+                        # IMPORTANT : ne plus traiter cet avion
+                        break
+
+                    # 🔥 2) Autres avions → évitement normal
                     self._apply_avoidance(plane, cond)
                     self._avoid_until[plane] = now + self.avoid_duration_ms
                     break
