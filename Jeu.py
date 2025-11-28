@@ -345,7 +345,8 @@ class MainGameWindow(QMainWindow):
     # Fonctions utilitaires
     def toggle_pause(self):
         self.paused = not self.paused  # Pause globale
-        # 🔹 Pause musique
+
+        #Pause musique
         if self.paused:
             self.player.pause()
         else:
