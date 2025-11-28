@@ -472,7 +472,7 @@ class MainGameWindow(QMainWindow):
             return
 
         # --- activer d'abord le plan d'atterrissage ---
-        self.landing_view.activate_ground_plane("Images/avion_attente.png")
+        self.landing_view.activate_ground_plane(None)
         self.control_ground_mode = True
         self.label_nom_avion.setText("Avion au sol")
         self.bar_altitude.setValue(0)

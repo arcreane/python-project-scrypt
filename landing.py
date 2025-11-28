@@ -1,5 +1,5 @@
 #landing.py
-# landing_optimized.py
+import random
 from PySide6.QtWidgets import QLabel, QSizePolicy
 from PySide6.QtGui import QPixmap, QPainter
 from PySide6.QtCore import Qt
@@ -27,7 +27,7 @@ class LandingView(QLabel):
         self.ground_plane_active = False
         self.ground_x = 20
         self.ground_y = 20
-        self.ground_scale = 0.30
+        self.ground_scale = 0.50
 
         # Cache pour optimiser le redraw
         self._overlay_cached = None
@@ -70,15 +70,31 @@ class LandingView(QLabel):
     # --------------------------
     # Gestion du ground plane
     # --------------------------
-    def activate_ground_plane(self, overlay_path="Images/avion_attente.png"):
+    def activate_ground_plane(self, overlay_path=None):
         self.locked = True
         self.ground_plane_active = True
+
+        # Choix aléatoire si overlay_path non fourni
+        if overlay_path is None:
+            # Liste des images possibles
+            images = [
+                "Images/Photo_atterrissage_1.png",
+                "Images/Photo_atterrissage_2.png",
+                "Images/Photo_atterrissage_3.png",
+                "Images/Photo_atterrissage_4.png",
+                "Images/Photo_atterrissage_5.png",
+                "Images/Photo_atterrissage_6.png",
+            ]
+            overlay_path = random.choice(images)
+
         self.plane_overlay = QPixmap(overlay_path)
-        self.ground_x = 20
-        self.ground_y = 20
+        self.ground_x = 40
+        self.ground_y = 40
+        self.ground_scale = 0.5
         self._overlay_cached = None
         self._last_position = (-1, -1)
         self.update_ground_plane()
+
 
     def update_ground_plane(self):
         if not self.ground_plane_active:
