@@ -36,7 +36,7 @@ class MarqueeLabel(QLabel):
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         painter.setFont(self.font())
-        painter.setPen(QtGui.QColor("purple"))
+        painter.setPen(QtGui.QColor("yellow"))
         painter.drawText(
             self.offset,
             int(self.height()/2 + self.fontMetrics().ascent()/2),
