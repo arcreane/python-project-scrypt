@@ -1,7 +1,7 @@
 #Jeu.py
 import sys
 from PySide6.QtWidgets import (
-    QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
+    QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QHBoxLayout, QWidget,
     QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar,
 )
 from PySide6.QtCore import Qt, QTimer
@@ -463,12 +463,6 @@ class MainGameWindow(QMainWindow):
                 return
 
     def on_atterrir_clicked(self):
-        """Gérer l'atterrissage :
-        - retirer l'avion sélectionné immédiatement de la carte et de la liste
-        - empêcher l'auto-sélection temporairement
-        - activer la landing view (piste)
-        - mettre la carte en pause (la piste reste active)
-        """
         plane = getattr(self.widget_carte, "selected_plane", None)
         if not plane:
             return
