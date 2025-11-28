@@ -1,7 +1,7 @@
 # meteo.py
 import random
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import QTimer, Qt, QRectF, Signal, QObject, QPointF
+from PySide6.QtCore import QTimer, Qt, QRectF, Signal, QObject
 from PySide6.QtGui import QPixmap
 
 class MeteoManager(QObject):
@@ -117,3 +117,9 @@ class MeteoManager(QObject):
             conditions.append(obj)
 
         return conditions
+
+    def get_message_meteo(self):
+        if len(self.evenements_actifs) == 0:
+            return "Rien à signaler"
+        else:
+            return "⚠️ Conditions météorologiques dangereuses détectées !"
