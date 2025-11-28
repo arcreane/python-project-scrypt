@@ -415,6 +415,7 @@ class MainGameWindow(QMainWindow):
             except Exception:
                 pass
 
+
     def on_carte_avion_selected(self, avion):
         if getattr(self, "suppress_auto_selection", False):
             return
