@@ -57,6 +57,19 @@ class MainGameWindow(QMainWindow):
         self.init_main_layout()
         self.level_manager = GameLevelManager(self)
 
+        from esthetisme_controles import style_layout_control
+
+        style_layout_control(
+            self.group_controles,
+            self.all_buttons,
+            btn_atterrir=self.btn_atterrir,
+            btn_urgence=self.btn_urgence,
+            btn_attente=self.btn_attente,
+            progress_bars=[self.bar_altitude, self.bar_vitesse, self.bar_fuel],
+            label_nom_avion=self.label_nom_avion,
+            compass=self.compass
+        )
+
         # Timer du score
         self.score_timer = QTimer()
         self.score_timer.timeout.connect(self.update_score)
