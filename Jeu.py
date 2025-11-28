@@ -23,7 +23,7 @@ from esthetisme_instructions_layout import style_layout_instructions
 class MainGameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.global_paused = False  # pour la pause complète du jeu
+        self.global_paused = False
         self.paused = False
         self.suppress_auto_selection = False
         self.setWindowTitle("SkyLink")
@@ -31,12 +31,27 @@ class MainGameWindow(QMainWindow):
         self.setFocusPolicy(Qt.StrongFocus)
         self.setFocus()
 
+        # SCORE (doit être ici AVANT init_main_layout)
+        self.score = 0
+        self.score_label = QLabel("Score : 0")
+        font_score = self.score_label.font()
+        font_score.setPointSize(20)
+        font_score.setBold(True)
+        self.score_label.setFont(font_score)
+        self.score_label.setStyleSheet("color: #FFD700;")
+
         # Initialisation des composants
         self.init_top_bar()
         self.init_central_widgets()
         self.init_avion_controls()
         self.init_instructions()
-        self.init_main_layout()
+        self.init_main_layout()  # score_label existe maintenant ✔️
+
+        # Timer du score
+        self.score_timer = QTimer()
+        self.score_timer.timeout.connect(self.update_score)
+        self.score_timer.start(1000)
+
         self.init_connections()
         self.meteo_manager.evenements_changed.connect(self.mettre_a_jour_message_defilant)
         self.init_music()
@@ -256,6 +271,7 @@ class MainGameWindow(QMainWindow):
 
         layout_droite = QVBoxLayout()
         layout_droite.addWidget(self.label_stats)
+        layout_droite.addWidget(self.score_label)
         layout_droite.addWidget(self.group_avions, 1)
 
         layout_zone_jeu = QHBoxLayout()
@@ -559,6 +575,13 @@ class MainGameWindow(QMainWindow):
     def update_stats(self):
         nb = len(self.widget_carte.planes)
         self.label_stats.setText(f"Avions présents : {nb}")
+
+    def update_score(self):
+        if self.paused or getattr(self, "control_ground_mode", False):
+            return  # pas de points pendant pause ou atterrissage
+
+        self.score += 10
+        self.score_label.setText(f"Score : {self.score}")
 
     def retour_menu(self):
         if self.player:
