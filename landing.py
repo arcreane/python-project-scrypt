@@ -2,7 +2,9 @@
 import random
 from PySide6.QtWidgets import QLabel, QSizePolicy
 from PySide6.QtGui import QPixmap, QPainter
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtMultimedia import QSoundEffect
+
 
 class LandingView(QLabel):
     def __init__(self):
@@ -32,6 +34,10 @@ class LandingView(QLabel):
         # Cache pour optimiser le redraw
         self._overlay_cached = None
         self._last_position = (-1, -1)
+
+        self.son_plouf = QSoundEffect()
+        self.son_plouf.setSource(QUrl.fromLocalFile("plouf.wav"))
+        self.son_plouf.setVolume(0.5)
 
     def set_selected_plane(self, plane):
         if self.locked or self.ground_plane_active:
@@ -67,9 +73,6 @@ class LandingView(QLabel):
         self._apply_current_pixmap()
         super().resizeEvent(event)
 
-    # --------------------------
-    # Gestion du ground plane
-    # --------------------------
     def activate_ground_plane(self, overlay_path=None):
         self.locked = True
         self.ground_plane_active = True
@@ -100,7 +103,6 @@ class LandingView(QLabel):
         if not self.ground_plane_active:
             return
 
-        # Redessiner overlay seulement si la position a changé
         if self._last_position != (self.ground_x, self.ground_y) or self._overlay_cached is None:
             overlay_small = self.plane_overlay.scaled(
                 int(self.plane_overlay.width() * self.ground_scale),
@@ -111,7 +113,6 @@ class LandingView(QLabel):
             self._overlay_cached = overlay_small
             self._last_position = (self.ground_x, self.ground_y)
 
-        # Composer l'image finale
         composed = QPixmap(self.pixmap_avion)
         painter = QPainter(composed)
         painter.drawPixmap(self.ground_x, self.ground_y, self._overlay_cached)
@@ -135,6 +136,28 @@ class LandingView(QLabel):
 
         self.update_ground_plane()
 
+        # Détection zone interdite (20% du bas)
+        landing_zone_ratio = 0.2  # 20% du bas de la pixmap
+        overlay_height = int(self.plane_overlay.height() * self.ground_scale)
+        landing_limit_y = self.pixmap_avion.height() * (1 - landing_zone_ratio)
+
+        if self.ground_y + overlay_height > landing_limit_y:
+            # Jouer le son plouf
+            if hasattr(self, "son_plouf") and self.son_plouf:
+                self.son_plouf.play()
+
+            # L'avion a dépassé la zone autorisée → malus points
+            if hasattr(self, "landing_malus_callback") and callable(self.landing_malus_callback):
+                self.landing_malus_callback(-200)
+
+            # Game over
+            if hasattr(self, "landing_game_over_callback") and callable(self.landing_game_over_callback):
+                self.landing_game_over_callback()
+
+            self.finish_landing()
+            return
+
+        # Atterrissage normal si en bas de l'image
         if self.ground_y >= max_y:
             self.finish_landing()
 
