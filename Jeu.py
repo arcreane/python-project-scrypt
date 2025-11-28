@@ -18,7 +18,7 @@ from Informations_avion import ContouredLabel, ContouredProgressBar, ContouredCo
 from esthetisme_avion_layout import style_layout_avions
 from esthetisme_instructions_layout import style_layout_instructions
 from Game_over import GameOverWidget
-
+from game_level_manager import GameLevelManager
 
 
 class MainGameWindow(QMainWindow):
@@ -40,12 +40,21 @@ class MainGameWindow(QMainWindow):
         self.score_label.setFont(font_score)
         self.score_label.setStyleSheet("color: #FFD700;")
 
+        # Label Niveau
+        self.niveau_label = QLabel("Niveau : 1")
+        f = self.niveau_label.font()
+        f.setPointSize(20)
+        f.setBold(True)
+        self.niveau_label.setFont(f)
+        self.niveau_label.setStyleSheet("color: #87CEFA;")
+
         # Initialisation des composants
         self.init_top_bar()
         self.init_central_widgets()
         self.init_avion_controls()
         self.init_instructions()
-        self.init_main_layout()  # score_label existe maintenant ✔️
+        self.init_main_layout()
+        self.level_manager = GameLevelManager(self)
 
         # Timer du score
         self.score_timer = QTimer()
@@ -280,6 +289,7 @@ class MainGameWindow(QMainWindow):
         layout_droite = QVBoxLayout()
         layout_droite.addWidget(self.label_stats)
         layout_droite.addWidget(self.score_label)
+        layout_droite.addWidget(self.niveau_label)
         layout_droite.addWidget(self.group_avions, 1)
 
         layout_zone_jeu = QHBoxLayout()
@@ -589,6 +599,7 @@ class MainGameWindow(QMainWindow):
 
         self.score += 10
         self.score_label.setText(f"Score : {self.score}")
+        self.level_manager.calcul_niveau()
 
     def retour_menu(self):
         if self.player:
