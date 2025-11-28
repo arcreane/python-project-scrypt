@@ -38,6 +38,7 @@ class MainGameWindow(QMainWindow):
         self.init_instructions()
         self.init_main_layout()
         self.init_connections()
+        self.meteo_manager.evenements_changed.connect(self.mettre_a_jour_message_defilant)
         self.init_music()
 
         self.update_stats()
@@ -519,7 +520,7 @@ class MainGameWindow(QMainWindow):
 
     def mettre_a_jour_message_defilant(self):
         if len(self.meteo_manager.evenements_actifs) > 0:
-            self.label_message.setText("ATTENTION – dangers météorologiques!")
+            self.label_message.setText("ATTENTION : Conditions météo dangereuses détectées !")
         else:
             self.label_message.setText("Rien à signaler")
 
