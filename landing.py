@@ -136,36 +136,53 @@ class LandingView(QLabel):
 
         self.update_ground_plane()
 
-        # Détection zone interdite (20% du bas)
-        landing_zone_ratio = 0.2  # 20% du bas de la pixmap
-        overlay_height = int(self.plane_overlay.height() * self.ground_scale)
-        landing_limit_y = self.pixmap_avion.height() * (1 - landing_zone_ratio)
+        # Définition de la zone piste selon tes pourcentages
+        piste_top = int(self.pixmap_avion.height() * 0.58)
+        piste_bottom = int(self.pixmap_avion.height() * 0.79)  # 58% + 21%
+        piste_left_top = int(self.pixmap_avion.width() * 0.26)
+        piste_left_bottom = int(self.pixmap_avion.width() * 0.235)
+        piste_right_top = int(self.pixmap_avion.width() * 0.12)
+        piste_right_bottom = int(self.pixmap_avion.width() * 0.06)
 
+        # Vérification si l’avion est **dans la piste**
+        overlay_height = int(self.plane_overlay.height() * self.ground_scale)
+        overlay_width = int(self.plane_overlay.width() * self.ground_scale)
+
+        # Calcul simple de collision / zone
+        if (piste_top <= self.ground_y <= piste_bottom - overlay_height and
+                piste_left_bottom <= self.ground_x <= self.pixmap_avion.width() - piste_right_bottom - overlay_width):
+            # Atterrissage réussi
+            self.finish_landing(success=True)
+            return
+
+        # Si on dépasse la zone autorisée → Game Over
+        landing_limit_y = self.pixmap_avion.height() * (1 - 0.2)  # 20% bas
         if self.ground_y + overlay_height > landing_limit_y:
             # Jouer le son plouf
             if hasattr(self, "son_plouf") and self.son_plouf:
                 self.son_plouf.play()
-
-            # L'avion a dépassé la zone autorisée → malus points
+            # Malus
             if hasattr(self, "landing_malus_callback") and callable(self.landing_malus_callback):
                 self.landing_malus_callback(-200)
-
-            # Game over
+            # Game Over
             if hasattr(self, "landing_game_over_callback") and callable(self.landing_game_over_callback):
                 self.landing_game_over_callback()
-
-            self.finish_landing()
+            self.finish_landing(success=False)
             return
 
-        # Atterrissage normal si en bas de l'image
-        if self.ground_y >= max_y:
-            self.finish_landing()
-
-    def finish_landing(self):
+    def finish_landing(self, success=False):
         self.ground_plane_active = False
         self.locked = False
 
-        # Appel du callback si défini (Crash d’avion)
+        if success:
+            # L'avion a atterri correctement → on le retire
+            if hasattr(self, "landing_finished_callback") and callable(self.landing_finished_callback):
+                self.landing_finished_callback()  # callback pour reprendre le jeu
+            self.current_pixmap = self.pixmap_attente
+            self._apply_current_pixmap()
+            return
+
+        # Si crash (ancien comportement)
         if hasattr(self, "landing_crash_callback") and callable(self.landing_crash_callback):
             self.landing_crash_callback()
         else:

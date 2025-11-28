@@ -545,6 +545,8 @@ class MainGameWindow(QMainWindow):
 
         QTimer.singleShot(50, lambda: setattr(self, "suppress_auto_selection", False))
 
+        self.landing_view.landing_finished_callback = self.on_landing_finished
+
     def on_landing_finished(self):
         """Reprendre le jeu après que l'avion ait fini l'atterrissage"""
         self.control_ground_mode = False
