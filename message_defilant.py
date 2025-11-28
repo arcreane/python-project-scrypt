@@ -18,7 +18,7 @@ class MarqueeLabel(QLabel):
         # Style du texte
         font = QtGui.QFont("Consolas", 20, QtGui.QFont.Bold)
         self.setFont(font)
-        self.setStyleSheet("background-color: black; color: purple;")
+        self.setStyleSheet("background-color: black; color: pink;")
 
     def scrollText(self):
         text_width = self.fontMetrics().horizontalAdvance(self.text())
@@ -35,7 +35,7 @@ class MarqueeLabel(QLabel):
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         painter.setFont(self.font())
-        painter.setPen(QtGui.QColor("purple"))
+        painter.setPen(QtGui.QColor("pink"))
         painter.drawText(
             self.offset,
             int(self.height()/2 + self.fontMetrics().ascent()/2),
