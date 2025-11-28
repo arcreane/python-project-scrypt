@@ -92,6 +92,7 @@ class MainGameWindow(QMainWindow):
         self.btn_pause = QPushButton("Pause")
         self.btn_pause.clicked.connect(self.toggle_pause)
         self.btn_recommencer = QPushButton("Recommencer")
+        self.btn_recommencer.clicked.connect(self.recommencer_jeu)
         self.btn_quitter = QPushButton("Quitter")
         self.btn_quitter.clicked.connect(self.retour_menu)
 
@@ -626,6 +627,25 @@ class MainGameWindow(QMainWindow):
         CollisionManager.paused = True
         if hasattr(self.meteo_manager, 'set_paused'):
             self.meteo_manager.set_paused(True)
+
+    # Fonction pour recommencer le jeu
+    def recommencer_jeu(self):
+        # Sauvegarder le player actuel
+        player_actuel = self.player
+        audio_output = self.audio_output
+
+        # Créer une nouvelle fenêtre de jeu
+        nouvelle_fenetre = MainGameWindow()
+
+        # Injecter le player existant pour que la musique continue
+        nouvelle_fenetre.player = player_actuel
+        nouvelle_fenetre.audio_output = audio_output
+        player_actuel.setParent(nouvelle_fenetre)  # éviter qu'il soit détruit
+        player_actuel.play()  # reprendre la musique si elle était en pause
+
+        # Afficher la nouvelle fenêtre et fermer l'ancienne
+        nouvelle_fenetre.showFullScreen()
+        self.close()
 
 
 if __name__ == "__main__":
