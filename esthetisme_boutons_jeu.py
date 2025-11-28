@@ -1,3 +1,4 @@
+#esthetisme_boutons_jeu.py
 from PySide6.QtWidgets import QPushButton
 from PySide6.QtGui import QPixmap, QPainter, QColor
 from PySide6.QtCore import Qt

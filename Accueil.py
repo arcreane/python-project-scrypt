@@ -1,3 +1,4 @@
+#Accueil.py
 import sys
 from PySide6.QtCore import Qt, QSize, QUrl
 from PySide6.QtGui import QPixmap
@@ -8,7 +9,6 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 from Jeu import MainGameWindow
 from InfoWindow import InfoWindow
-
 
 
 # Classe : Fenêtre Accueil

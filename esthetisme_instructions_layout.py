@@ -1,3 +1,4 @@
+#esthetisme_instructions_layout.py
 from PySide6.QtWidgets import QVBoxLayout, QGroupBox, QLabel, QPushButton, QSizePolicy, QSpacerItem
 from PySide6.QtCore import Qt
 

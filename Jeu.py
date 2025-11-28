@@ -1,3 +1,4 @@
+#Jeu.py
 import sys
 from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
@@ -414,7 +415,6 @@ class MainGameWindow(QMainWindow):
                 self.compass.set_cap(plane.avion.cap)
             except Exception:
                 pass
-
 
     def on_carte_avion_selected(self, avion):
         if getattr(self, "suppress_auto_selection", False):

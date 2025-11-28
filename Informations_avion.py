@@ -1,3 +1,4 @@
+#Informations_avions.py
 from PySide6.QtWidgets import QLabel, QWidget, QProgressBar
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QColor, QPen
