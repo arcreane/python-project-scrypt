@@ -1,7 +1,7 @@
 #Jeu.py
 import sys
 from PySide6.QtWidgets import (
-    QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QHBoxLayout, QWidget,
+    QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
     QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar,
 )
 from PySide6.QtCore import Qt, QTimer
@@ -17,7 +17,7 @@ from collision_meteo import CollisionManager
 from Informations_avion import ContouredLabel, ContouredProgressBar, ContouredCompass
 from esthetisme_avion_layout import style_layout_avions
 from esthetisme_instructions_layout import style_layout_instructions
-from Game_over import GameOverWidget
+from game_level_manager import GameLevelManager
 
 
 
@@ -27,11 +27,17 @@ class MainGameWindow(QMainWindow):
         self.global_paused = False
         self.paused = False
         self.suppress_auto_selection = False
+
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
-        self.setFocusPolicy(Qt.StrongFocus)
-        self.setFocus()
 
+        # 1. init top + widgets + controls
+        self.init_top_bar()
+        self.init_central_widgets()
+        self.init_avion_controls()
+        self.init_instructions()
+
+        # 2. SCORE ET NIVEAU ICI (très important)
         self.score = 0
         self.score_label = QLabel("Score : 0")
         font_score = self.score_label.font()
@@ -40,14 +46,20 @@ class MainGameWindow(QMainWindow):
         self.score_label.setFont(font_score)
         self.score_label.setStyleSheet("color: #FFD700;")
 
-        # Initialisation des composants
-        self.init_top_bar()
-        self.init_central_widgets()
-        self.init_avion_controls()
-        self.init_instructions()
-        self.init_main_layout()  # score_label existe maintenant ✔️
+        self.niveau_label = QLabel("Niveau : 1")
+        f = self.niveau_label.font()
+        f.setPointSize(20)
+        f.setBold(True)
+        self.niveau_label.setFont(f)
+        self.niveau_label.setStyleSheet("color: #87CEFA;")
 
-        # Timer du score
+        # 3. Manager de niveaux (il utilise les labels)
+        self.level_manager = GameLevelManager(self)
+
+        # 4. Maintenant que TOUT est prêt → construire le layout
+        self.init_main_layout()
+
+        # 5. Suite du code : timer, musique, connexions
         self.score_timer = QTimer()
         self.score_timer.timeout.connect(self.update_score)
         self.score_timer.start(1000)
@@ -57,6 +69,27 @@ class MainGameWindow(QMainWindow):
         self.init_music()
 
         self.update_stats()
+        self.level_manager.calcul_niveau()
+
+        # SCORE (doit être ici AVANT init_main_layout)
+        self.score = 0
+        self.score_label = QLabel("Score : 0")
+        font_score = self.score_label.font()
+        font_score.setPointSize(20)
+        font_score.setBold(True)
+        self.score_label.setFont(font_score)
+        self.score_label.setStyleSheet("color: #FFD700;")
+
+        # Label Niveau
+        self.niveau_label = QLabel("Niveau : 1")
+        f = self.niveau_label.font()
+        f.setPointSize(20)
+        f.setBold(True)
+        self.niveau_label.setFont(f)
+        self.niveau_label.setStyleSheet("color: #87CEFA;")
+
+        # Manager de niveaux
+        self.level_manager = GameLevelManager(self)
 
     # Barre du haut
     def init_top_bar(self):
@@ -129,9 +162,7 @@ class MainGameWindow(QMainWindow):
 
         # Carte et météo
         self.landing_view = LandingView()
-        self.landing_view.landing_crash_callback = self.on_plane_crash
-        self.landing_view.landing_game_over_callback = self.show_game_over
-
+        self.landing_view.landing_finished_callback = self.on_landing_finished
         self.widget_carte = GameWidget()
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.meteo_manager = self.widget_carte.meteo_manager
@@ -280,6 +311,7 @@ class MainGameWindow(QMainWindow):
         layout_droite = QVBoxLayout()
         layout_droite.addWidget(self.label_stats)
         layout_droite.addWidget(self.score_label)
+        layout_droite.addWidget(self.niveau_label)
         layout_droite.addWidget(self.group_avions, 1)
 
         layout_zone_jeu = QHBoxLayout()
@@ -469,12 +501,18 @@ class MainGameWindow(QMainWindow):
                 return
 
     def on_atterrir_clicked(self):
+        """Gérer l'atterrissage :
+        - retirer l'avion sélectionné immédiatement de la carte et de la liste
+        - empêcher l'auto-sélection temporairement
+        - activer la landing view (piste)
+        - mettre la carte en pause (la piste reste active)
+        """
         plane = getattr(self.widget_carte, "selected_plane", None)
         if not plane:
             return
 
         # --- activer d'abord le plan d'atterrissage ---
-        self.landing_view.activate_ground_plane(None)
+        self.landing_view.activate_ground_plane("Images/avion_attente.png")
         self.control_ground_mode = True
         self.label_nom_avion.setText("Avion au sol")
         self.bar_altitude.setValue(0)
@@ -485,6 +523,7 @@ class MainGameWindow(QMainWindow):
         except Exception:
             pass
 
+        # --- ensuite, empêcher que la suppression provoque une auto-sélection ---
         self.suppress_auto_selection = True
         self.liste_avions.blockSignals(True)
         try:
@@ -554,7 +593,7 @@ class MainGameWindow(QMainWindow):
                 self.landing_view.move_ground_plane(dx=10)
             return
 
-        # contrôle avion normal
+        # sinon, contrôle avion normal
         plane = self.widget_carte.selected_plane
         if plane is None:
             return
@@ -591,24 +630,6 @@ class MainGameWindow(QMainWindow):
         self.menu_window = Window()
         self.menu_window.showFullScreen()
         self.close()
-
-    def on_plane_crash(self):
-        self.score -= 200
-        self.score_label.setText(f"Score : {self.score}")
-        if self.score <= 0:
-            self.show_game_over()
-
-    def show_game_over(self):
-        game_over_widget = GameOverWidget(self)
-        game_over_widget.setGeometry(self.geometry())
-        game_over_widget.show()
-
-        # Met le jeu en pause pour qu’il s’arrête
-        self.paused = True
-        self.widget_carte.set_paused(True)
-        CollisionManager.paused = True
-        if hasattr(self.meteo_manager, 'set_paused'):
-            self.meteo_manager.set_paused(True)
 
 
 if __name__ == "__main__":
