@@ -19,6 +19,7 @@ from esthetisme_avion_layout import style_layout_avions
 from esthetisme_instructions_layout import style_layout_instructions
 from Game_over import GameOverWidget
 from game_level_manager import GameLevelManager
+from esthetisme_stats_layout import style_layout_stats
 
 
 class MainGameWindow(QMainWindow):
@@ -171,6 +172,7 @@ class MainGameWindow(QMainWindow):
         self.group_avions.setLayout(layout_avions)
 
         style_layout_avions(self.group_avions, self.liste_avions, max_height=400)
+        style_layout_stats(self.label_stats, self.score_label, self.niveau_label, self.group_avions)
 
     # Groupe Contrôles
     def init_avion_controls(self):
