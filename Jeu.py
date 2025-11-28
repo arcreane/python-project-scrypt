@@ -602,14 +602,6 @@ class MainGameWindow(QMainWindow):
         self.score_label.setText(f"Score : {self.score}")
         self.level_manager.calcul_niveau()
 
-    def retour_menu(self):
-        if self.player:
-            self.player.stop()
-        from Accueil import Window
-        self.menu_window = Window()
-        self.menu_window.showFullScreen()
-        self.close()
-
     def on_plane_crash(self):
         self.score -= 200
         self.score_label.setText(f"Score : {self.score}")
@@ -645,6 +637,14 @@ class MainGameWindow(QMainWindow):
 
         # Afficher la nouvelle fenêtre et fermer l'ancienne
         nouvelle_fenetre.showFullScreen()
+        self.close()
+
+    def retour_menu(self):
+        if self.player:
+            self.player.stop()
+        from Accueil import Window
+        self.menu_window = Window()
+        self.menu_window.showFullScreen()
         self.close()
 
 
