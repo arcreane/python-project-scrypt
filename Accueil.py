@@ -10,6 +10,7 @@ from Jeu import MainGameWindow
 from InfoWindow import InfoWindow
 
 
+
 # Classe : Fenêtre Accueil
 class Window(QWidget):
     def __init__(self):
