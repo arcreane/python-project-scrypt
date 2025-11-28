@@ -53,13 +53,12 @@ class MainGameWindow(QMainWindow):
         self.niveau_label.setFont(f)
         self.niveau_label.setStyleSheet("color: #87CEFA;")
 
-        # 3. Manager de niveaux (il utilise les labels)
+
         self.level_manager = GameLevelManager(self)
 
-        # 4. Maintenant que TOUT est prêt → construire le layout
         self.init_main_layout()
 
-        # 5. Suite du code : timer, musique, connexions
+
         self.score_timer = QTimer()
         self.score_timer.timeout.connect(self.update_score)
         self.score_timer.start(1000)
