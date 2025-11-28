@@ -141,9 +141,10 @@ class LandingView(QLabel):
     def finish_landing(self):
         self.ground_plane_active = False
         self.locked = False
-        self.current_pixmap = self.pixmap_attente
-        self._apply_current_pixmap()
 
-        # Appel du callback
-        if hasattr(self, "landing_finished_callback") and callable(self.landing_finished_callback):
-            self.landing_finished_callback()
+        # Appel du callback si défini (Crash d’avion)
+        if hasattr(self, "landing_crash_callback") and callable(self.landing_crash_callback):
+            self.landing_crash_callback()
+        else:
+            self.current_pixmap = self.pixmap_attente
+            self._apply_current_pixmap()

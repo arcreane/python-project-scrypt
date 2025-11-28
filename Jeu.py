@@ -17,6 +17,7 @@ from collision_meteo import CollisionManager
 from Informations_avion import ContouredLabel, ContouredProgressBar, ContouredCompass
 from esthetisme_avion_layout import style_layout_avions
 from esthetisme_instructions_layout import style_layout_instructions
+from Game_over import GameOverWidget
 
 
 
@@ -31,7 +32,6 @@ class MainGameWindow(QMainWindow):
         self.setFocusPolicy(Qt.StrongFocus)
         self.setFocus()
 
-        # SCORE (doit être ici AVANT init_main_layout)
         self.score = 0
         self.score_label = QLabel("Score : 0")
         font_score = self.score_label.font()
@@ -125,7 +125,9 @@ class MainGameWindow(QMainWindow):
 
         # Carte et météo
         self.landing_view = LandingView()
-        self.landing_view.landing_finished_callback = self.on_landing_finished
+        self.landing_view.landing_crash_callback = self.on_plane_crash
+        self.landing_view.landing_game_over_callback = self.show_game_over
+
         self.widget_carte = GameWidget()
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.meteo_manager = self.widget_carte.meteo_manager
@@ -483,7 +485,6 @@ class MainGameWindow(QMainWindow):
         except Exception:
             pass
 
-        # --- ensuite, empêcher que la suppression provoque une auto-sélection ---
         self.suppress_auto_selection = True
         self.liste_avions.blockSignals(True)
         try:
@@ -553,7 +554,7 @@ class MainGameWindow(QMainWindow):
                 self.landing_view.move_ground_plane(dx=10)
             return
 
-        # sinon, contrôle avion normal
+        # contrôle avion normal
         plane = self.widget_carte.selected_plane
         if plane is None:
             return
@@ -590,6 +591,24 @@ class MainGameWindow(QMainWindow):
         self.menu_window = Window()
         self.menu_window.showFullScreen()
         self.close()
+
+    def on_plane_crash(self):
+        self.score -= 200
+        self.score_label.setText(f"Score : {self.score}")
+        if self.score <= 0:
+            self.show_game_over()
+
+    def show_game_over(self):
+        game_over_widget = GameOverWidget(self)
+        game_over_widget.setGeometry(self.geometry())
+        game_over_widget.show()
+
+        # Met le jeu en pause pour qu’il s’arrête
+        self.paused = True
+        self.widget_carte.set_paused(True)
+        CollisionManager.paused = True
+        if hasattr(self.meteo_manager, 'set_paused'):
+            self.meteo_manager.set_paused(True)
 
 
 if __name__ == "__main__":
