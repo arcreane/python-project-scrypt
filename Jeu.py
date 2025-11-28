@@ -119,6 +119,10 @@ class MainGameWindow(QMainWindow):
         self.btn_quitter = QPushButton("Quitter")
         self.btn_quitter.clicked.connect(self.retour_menu)
 
+        self.btn_pause.setFocusPolicy(Qt.NoFocus)
+        self.btn_recommencer.setFocusPolicy(Qt.NoFocus)
+        self.btn_quitter.setFocusPolicy(Qt.NoFocus)
+
         for b, style in zip(
             [self.btn_pause, self.btn_recommencer, self.btn_quitter],
             [
@@ -175,6 +179,7 @@ class MainGameWindow(QMainWindow):
         # Liste des avions
         self.liste_avions = QListWidget()
         self.liste_avions.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.liste_avions.setFocusPolicy(Qt.NoFocus)
         self.liste_avions.setAlternatingRowColors(True)
         self.liste_avions.setStyleSheet("""
             QListWidget::item:selected { background-color: #88C0D0; color: black; }
@@ -205,6 +210,7 @@ class MainGameWindow(QMainWindow):
                             self.btn_atterrir, self.btn_attente, self.btn_urgence, self.btn_accelerer, self.btn_ralentir]
         for b in self.all_buttons:
             b.setFixedHeight(60)
+            b.setFocusPolicy(Qt.NoFocus)
 
         self.btn_gauche.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.btn_droite.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
