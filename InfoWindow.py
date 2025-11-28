@@ -1,3 +1,4 @@
+#InfoWindow.py
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap

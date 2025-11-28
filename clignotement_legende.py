@@ -1,3 +1,4 @@
+#clignotement_legende.py
 from PySide6.QtCore import QTimer
 
 def clignoter_avions_urgence(game_widget, duree=4000, intervalle=200):

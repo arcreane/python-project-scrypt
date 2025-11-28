@@ -1,3 +1,4 @@
+#landing.py
 # landing_optimized.py
 from PySide6.QtWidgets import QLabel, QSizePolicy
 from PySide6.QtGui import QPixmap, QPainter
