@@ -26,6 +26,9 @@ class GameOverWidget(QWidget):
 
         self.btn_restart = QPushButton("Recommencer")
         self.btn_quit = QPushButton("Quitter")
+        self.btn_restart.setFocusPolicy(Qt.NoFocus)
+        self.btn_quit.setFocusPolicy(Qt.NoFocus)
+
         for b in [self.btn_restart, self.btn_quit]:
             b.setFixedSize(240, 70)
 
