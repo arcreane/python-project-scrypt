@@ -609,7 +609,12 @@ class MainGameWindow(QMainWindow):
             self.show_game_over()
 
     def show_game_over(self):
-        game_over_widget = GameOverWidget(self)
+        # On passe les méthodes existantes comme callbacks
+        game_over_widget = GameOverWidget(
+            self,
+            restart_callback=self.recommencer_jeu,
+            quit_callback=self.retour_menu
+        )
         game_over_widget.setGeometry(self.geometry())
         game_over_widget.show()
 
