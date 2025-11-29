@@ -1,11 +1,9 @@
-#Jeu.py
 import sys
 from PySide6.QtWidgets import (
-    QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QHBoxLayout, QWidget,
-    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar,
+    QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
+    QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem
 )
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont, QPalette, QColor
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 # Modules du projet
@@ -23,38 +21,40 @@ from esthetisme_stats_layout import style_layout_stats
 
 
 class MainGameWindow(QMainWindow):
+
+    # CONSTRUCTEUR
     def __init__(self):
         super().__init__()
+
+        # États
         self.global_paused = False
         self.paused = False
         self.suppress_auto_selection = False
+        self.control_ground_mode = False
+
+        # Fenêtre
         self.setWindowTitle("SkyLink")
         self.showFullScreen()
         self.setFocusPolicy(Qt.StrongFocus)
         self.setFocus()
 
+        # Score
         self.score = 0
         self.score_label = QLabel("Score : 0")
-        font_score = self.score_label.font()
-        font_score.setPointSize(20)
-        font_score.setBold(True)
-        self.score_label.setFont(font_score)
-        self.score_label.setStyleSheet("color: #FFD700;")
+        self._init_score_label()
 
-        # Label Niveau
+        # Niveau
         self.niveau_label = QLabel("Niveau : 1")
-        f = self.niveau_label.font()
-        f.setPointSize(20)
-        f.setBold(True)
-        self.niveau_label.setFont(f)
-        self.niveau_label.setStyleSheet("color: #87CEFA;")
+        self._init_niveau_label()
 
-        # Initialisation des composants
+        # UI générale
         self.init_top_bar()
         self.init_central_widgets()
         self.init_avion_controls()
         self.init_instructions()
         self.init_main_layout()
+
+        # Gestion du niveau
         self.level_manager = GameLevelManager(self)
 
         # Timer du score
@@ -62,120 +62,136 @@ class MainGameWindow(QMainWindow):
         self.score_timer.timeout.connect(self.update_score)
         self.score_timer.start(1000)
 
+        # Connexions
         self.init_connections()
+
+        # Météo → update message
         self.meteo_manager.evenements_changed.connect(self.mettre_a_jour_message_defilant)
+
+        # Musique
         self.init_music()
 
+        # Stats
         self.update_stats()
 
-    # Barre du haut
+    # LABELS SCORE/NIVEAU
+    def _init_score_label(self):
+        font = self.score_label.font()
+        font.setPointSize(20)
+        font.setBold(True)
+        self.score_label.setFont(font)
+        self.score_label.setStyleSheet("color: #FFD700;")
+
+    def _init_niveau_label(self):
+        f = self.niveau_label.font()
+        f.setPointSize(20)
+        f.setBold(True)
+        self.niveau_label.setFont(f)
+        self.niveau_label.setStyleSheet("color: #87CEFA;")
+
+    # BARRE DU HAUT
     def init_top_bar(self):
         self.barre_haut = QWidget()
         self.barre_haut.setMaximumHeight(40)
         self.barre_haut.setStyleSheet("background-color: #5D4482;")
 
-        layout_barre = QHBoxLayout(self.barre_haut)
-        layout_barre.setContentsMargins(5, 5, 5, 5)
-        layout_barre.setSpacing(5)
+        layout = QHBoxLayout(self.barre_haut)
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(5)
 
         # Message
         self.message_label = QLabel("L'équipe Scrypt vous souhaite une bonne partie !")
-        self.message_label.setAlignment(Qt.AlignCenter)
         font = self.message_label.font()
         font.setPointSize(18)
         font.setBold(True)
         self.message_label.setFont(font)
         self.message_label.setStyleSheet("color: white;")
-        layout_barre.addWidget(self.message_label)
-        layout_barre.addStretch(1)
+        self.message_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.message_label)
+        layout.addStretch(1)
 
         # Boutons
         self.btn_pause = QPushButton("Pause")
-        self.btn_pause.clicked.connect(self.toggle_pause)
         self.btn_recommencer = QPushButton("Recommencer")
-        self.btn_recommencer.clicked.connect(self.recommencer_jeu)
         self.btn_quitter = QPushButton("Quitter")
+
+        self.btn_pause.clicked.connect(self.toggle_pause)
+        self.btn_recommencer.clicked.connect(self.recommencer_jeu)
         self.btn_quitter.clicked.connect(self.retour_menu)
 
-        self.btn_pause.setFocusPolicy(Qt.NoFocus)
-        self.btn_recommencer.setFocusPolicy(Qt.NoFocus)
-        self.btn_quitter.setFocusPolicy(Qt.NoFocus)
-
-        for b, style in zip(
+        for btn, css in zip(
             [self.btn_pause, self.btn_recommencer, self.btn_quitter],
             [
-                """
-                QPushButton { background-color: rgba(80, 150, 255, 140); color: white;
-                border-radius: 10px; padding: 8px 16px; font-size: 16px; font-weight: bold; }
-                QPushButton:hover { background-color: #C5A6F0; }""",
-                """
-                QPushButton { background-color: #5BC074; color: white; border-radius: 10px;
-                padding: 8px 16px; font-size: 16px; font-weight: bold; }
-                QPushButton:hover { background-color: #79D890; }""",
-                """
-                QPushButton { background-color: #E85757; color: white; border-radius: 10px;
-                padding: 8px 16px; font-size: 16px; font-weight: bold; }
-                QPushButton:hover { background-color: #FF6F6F; }"""
+                """QPushButton { background-color: rgba(80,150,255,140); color:white;
+                border-radius:10px; padding:8px 16px; font-size:16px; font-weight:bold; }
+                QPushButton:hover { background-color:#C5A6F0; }""",
+                """QPushButton { background-color:#5BC074; color:white; border-radius:10px;
+                padding:8px 16px; font-size:16px; font-weight:bold; }
+                QPushButton:hover { background-color:#79D890; }""",
+                """QPushButton { background-color:#E85757; color:white; border-radius:10px;
+                padding:8px 16px; font-size:16px; font-weight:bold; }
+                QPushButton:hover { background-color:#FF6F6F; }"""
             ]
         ):
-            b.setStyleSheet(style)
-            layout_barre.addWidget(b)
+            btn.setStyleSheet(css)
+            btn.setFocusPolicy(Qt.NoFocus)
+            layout.addWidget(btn)
 
-    # Widgets centraux
+    # WIDGETS CENTRAUX
     def init_central_widgets(self):
-        # Stats et message
-        self.label_stats = QLabel("Stats")
-        self.label_stats.setFrameShape(QLabel.Panel)
-        self.label_stats.setAlignment(Qt.AlignCenter)
 
-        # Modifier la police pour qu'elle soit plus grosse et en gras
-        font_stats = self.label_stats.font()
-        font_stats.setPointSize(24)  # taille plus grande
-        font_stats.setBold(True)
-        self.label_stats.setFont(font_stats)
+        # Stats
+        self.label_stats = QLabel("Stats")
+        font = self.label_stats.font()
+        font.setPointSize(24)
+        font.setBold(True)
+        self.label_stats.setFont(font)
+        self.label_stats.setAlignment(Qt.AlignCenter)
         self.label_stats.setStyleSheet("color: #A3C1DA;")
 
-        self.label_message = MarqueeLabel("Rien à signaler")  # message défilant
+        # Message défilant
+        self.label_message = MarqueeLabel("Rien à signaler")
         self.label_message.setFixedHeight(40)
 
-        # Carte et météo
-        self.landing_view = LandingView()
-        self.landing_view.landing_crash_callback = self.on_plane_crash
-        self.landing_view.landing_game_over_callback = self.show_game_over
-
+        # Carte
         self.widget_carte = GameWidget()
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.meteo_manager = self.widget_carte.meteo_manager
 
+        # Landing view
+        self.landing_view = LandingView()
+        self.landing_view.landing_crash_callback = self.on_plane_crash
+        self.landing_view.landing_game_over_callback = self.show_game_over
+
+        # Carte group box
         self.carte_box = QGroupBox()
         self.carte_box.setFlat(True)
         self.carte_box.setStyleSheet("QGroupBox { border: none; }")
+
         layout_carte = QVBoxLayout()
         layout_carte.setContentsMargins(0, 0, 0, 0)
-        layout_carte.setSpacing(0)
         layout_carte.addWidget(self.widget_carte)
         self.carte_box.setLayout(layout_carte)
 
-        # Liste des avions
+        # Liste avions
         self.liste_avions = QListWidget()
-        self.liste_avions.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.liste_avions.setFocusPolicy(Qt.NoFocus)
-        self.liste_avions.setAlternatingRowColors(True)
         self.liste_avions.setStyleSheet("""
-            QListWidget::item:selected { background-color: #88C0D0; color: black; }
-            QListWidget::item:hover { background-color: #A3D0E0; }
+            QListWidget::item:selected { background-color:#88C0D0; color:black; }
+            QListWidget::item:hover { background-color:#A3D0E0; }
         """)
 
         self.group_avions = QGroupBox("Avions")
-        layout_avions = QVBoxLayout()
-        layout_avions.addWidget(self.liste_avions)
-        self.group_avions.setLayout(layout_avions)
+        lay_avions = QVBoxLayout()
+        lay_avions.addWidget(self.liste_avions)
+        self.group_avions.setLayout(lay_avions)
 
         style_layout_avions(self.group_avions, self.liste_avions, max_height=400)
         style_layout_stats(self.label_stats, self.score_label, self.niveau_label, self.group_avions)
 
-    # Groupe Contrôles
+    # CONTROLES AVION
     def init_avion_controls(self):
+
         # Boutons
         self.btn_monter = QPushButton("Monter")
         self.btn_descendre = QPushButton("Descendre")
@@ -187,16 +203,16 @@ class MainGameWindow(QMainWindow):
         self.btn_accelerer = QPushButton("Accélérer")
         self.btn_ralentir = QPushButton("Ralentir")
 
-        self.all_buttons = [self.btn_monter, self.btn_descendre, self.btn_gauche, self.btn_droite,
-                            self.btn_atterrir, self.btn_attente, self.btn_urgence, self.btn_accelerer, self.btn_ralentir]
+        self.all_buttons = [
+            self.btn_monter, self.btn_descendre, self.btn_gauche, self.btn_droite,
+            self.btn_atterrir, self.btn_attente, self.btn_urgence,
+            self.btn_accelerer, self.btn_ralentir
+        ]
         for b in self.all_buttons:
             b.setFixedHeight(60)
             b.setFocusPolicy(Qt.NoFocus)
 
-        self.btn_gauche.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.btn_droite.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-
-        # Connexion des boutons
+        # Connexions carte
         self.btn_monter.clicked.connect(self.widget_carte.monter_selected)
         self.btn_descendre.clicked.connect(self.widget_carte.descendre_selected)
         self.btn_gauche.clicked.connect(self.widget_carte.gauche_selected)
@@ -207,114 +223,126 @@ class MainGameWindow(QMainWindow):
         self.btn_attente.clicked.connect(self.widget_carte.attente_selected)
         self.btn_atterrir.clicked.connect(self.on_atterrir_clicked)
 
+        # Connexions landing view
         self.btn_monter.clicked.connect(lambda: self.landing_view.move_ground_plane(dy=-10))
         self.btn_descendre.clicked.connect(lambda: self.landing_view.move_ground_plane(dy=10))
         self.btn_gauche.clicked.connect(lambda: self.landing_view.move_ground_plane(dx=-10))
         self.btn_droite.clicked.connect(lambda: self.landing_view.move_ground_plane(dx=10))
 
-        # Infos avion et boussole
+        # Label avion
         self.label_nom_avion = ContouredLabel("Sélectionner un avion")
-        self.label_nom_avion.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        font = self.label_nom_avion.font()
-        font.setPointSize(18)
-        font.setBold(True)
-        self.label_nom_avion.setFont(font)
+        f = self.label_nom_avion.font()
+        f.setPointSize(18)
+        f.setBold(True)
+        self.label_nom_avion.setFont(f)
 
+        # Boussole
         self.compass = ContouredCompass()
-        layout_avion_top = QHBoxLayout()
-        layout_avion_top.addWidget(self.label_nom_avion, 1)
-        layout_avion_top.addWidget(self.compass, 0)
+
+        # Layout avion top
+        lay_avion_top = QHBoxLayout()
+        lay_avion_top.addWidget(self.label_nom_avion, 1)
+        lay_avion_top.addWidget(self.compass, 0)
 
         # Progress bars
         self.bar_altitude = ContouredProgressBar()
         self.bar_vitesse = ContouredProgressBar()
         self.bar_fuel = ContouredProgressBar()
+
         self.bar_altitude.setFormat("Altitude : %v m")
         self.bar_vitesse.setFormat("Vitesse : %v km/h")
         self.bar_fuel.setFormat("Carburant : %v %")
+
         self.bar_altitude.setMaximum(12000)
         self.bar_vitesse.setMaximum(900)
         self.bar_fuel.setMaximum(100)
-        self.update_progress_bar_spectrum(self.bar_altitude, 0, 12000, [(80,0,120),(120,200,255)])
-        self.update_progress_bar_spectrum(self.bar_vitesse, 0, 900,
-                                          [(128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)])
-        self.update_progress_bar_spectrum(self.bar_fuel, 0, 100, [(255,0,0),(255,255,0)])
 
-        # Layout du groupe
+        self.update_progress_bar_spectrum(
+            self.bar_altitude, 0, 12000, [(80,0,120),(120,200,255)]
+        )
+        self.update_progress_bar_spectrum(
+            self.bar_vitesse, 0, 900,
+            [(128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)]
+        )
+        self.update_progress_bar_spectrum(
+            self.bar_fuel, 0, 100, [(255,0,0),(255,255,0)]
+        )
+
+        # Grouper
         self.group_controles = QGroupBox("Contrôles")
-        layout_controles = QVBoxLayout()
-        layout_controles.addLayout(layout_avion_top)
+        lay_ctrl = QVBoxLayout()
+        lay_ctrl.addLayout(lay_avion_top)
+        lay_ctrl.addWidget(self.bar_altitude)
+        lay_ctrl.addWidget(self.bar_vitesse)
+        lay_ctrl.addWidget(self.bar_fuel)
 
-        layout_urgence_attente = QHBoxLayout()
-        layout_urgence_attente.setSpacing(5)
-        layout_urgence_attente.addWidget(self.btn_urgence)
-        layout_urgence_attente.addWidget(self.btn_attente)
+        lay_urg = QHBoxLayout()
+        lay_urg.addWidget(self.btn_urgence)
+        lay_urg.addWidget(self.btn_attente)
 
-        layout_controles.addWidget(self.bar_altitude)
-        layout_controles.addWidget(self.bar_vitesse)
-        layout_controles.addWidget(self.bar_fuel)
-        layout_controles.addLayout(layout_urgence_attente)
-        layout_controles.addWidget(self.btn_atterrir)
-        self.group_controles.setLayout(layout_controles)
-        self.group_controles.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        lay_ctrl.addLayout(lay_urg)
+        lay_ctrl.addWidget(self.btn_atterrir)
+        self.group_controles.setLayout(lay_ctrl)
 
-    # Groupe Instructions
+    # INSTRUCTIONS
     def init_instructions(self):
-        self.group_instructions = QGroupBox("Instructions")
-        layout_instructions = QVBoxLayout()
-        layout_instructions.setContentsMargins(0,0,0,0)
-        layout_instructions.setSpacing(5)
 
-        layout_instructions.addWidget(self.btn_monter)
-        layout_instructions.addWidget(self.btn_descendre)
-        layout_gauche_droite = QHBoxLayout()
-        layout_gauche_droite.setSpacing(5)
-        layout_gauche_droite.addWidget(self.btn_gauche)
-        layout_gauche_droite.addWidget(self.btn_droite)
-        layout_instructions.addLayout(layout_gauche_droite)
-        layout_instructions.addWidget(self.btn_accelerer)
-        layout_instructions.addWidget(self.btn_ralentir)
-        self.group_instructions.setLayout(layout_instructions)
-        self.group_instructions.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.group_instructions = QGroupBox("Instructions")
+        lay = QVBoxLayout()
+        lay.setContentsMargins(0,0,0,0)
+
+        lay.addWidget(self.btn_monter)
+        lay.addWidget(self.btn_descendre)
+        lay_lr = QHBoxLayout()
+        lay_lr.addWidget(self.btn_gauche)
+        lay_lr.addWidget(self.btn_droite)
+        lay.addLayout(lay_lr)
+
+        lay.addWidget(self.btn_accelerer)
+        lay.addWidget(self.btn_ralentir)
+
+        self.group_instructions.setLayout(lay)
         style_layout_instructions(self.group_instructions, max_height=400)
 
-    # Layout principal
+    # LAYOUT PRINCIPAL
     def init_main_layout(self):
-        layout_gauche = QVBoxLayout()
-        layout_gauche.addWidget(self.group_controles, 1)
-        layout_gauche.addWidget(self.group_instructions, 1)
 
-        layout_centre = QVBoxLayout()
-        layout_centre.addWidget(self.carte_box, 5)
-        layout_centre.addWidget(self.label_message, 1)
-        layout_centre.addWidget(self.landing_view, 5)
+        # Colonnes
+        col_gauche = QVBoxLayout()
+        col_gauche.addWidget(self.group_controles, 1)
+        col_gauche.addWidget(self.group_instructions, 1)
 
-        layout_droite = QVBoxLayout()
-        layout_droite.addWidget(self.label_stats)
-        layout_droite.addWidget(self.score_label)
-        layout_droite.addWidget(self.niveau_label)
-        layout_droite.addWidget(self.group_avions, 1)
+        col_centre = QVBoxLayout()
+        col_centre.addWidget(self.carte_box, 5)
+        col_centre.addWidget(self.label_message, 1)
+        col_centre.addWidget(self.landing_view, 5)
 
-        layout_zone_jeu = QHBoxLayout()
-        layout_zone_jeu.addLayout(layout_droite, 1)
-        layout_zone_jeu.addLayout(layout_centre, 2)
-        layout_zone_jeu.addLayout(layout_gauche, 1)
+        col_droite = QVBoxLayout()
+        col_droite.addWidget(self.label_stats)
+        col_droite.addWidget(self.score_label)
+        col_droite.addWidget(self.niveau_label)
+        col_droite.addWidget(self.group_avions, 1)
+
+        zone_jeu = QHBoxLayout()
+        zone_jeu.addLayout(col_droite, 1)
+        zone_jeu.addLayout(col_centre, 2)
+        zone_jeu.addLayout(col_gauche, 1)
 
         layout_global = QVBoxLayout()
         layout_global.addWidget(self.barre_haut)
-        layout_global.addLayout(layout_zone_jeu)
+        layout_global.addLayout(zone_jeu)
 
-        central_widget = QWidget()
-        central_widget.setLayout(layout_global)
-        self.setCentralWidget(central_widget)
+        w = QWidget()
+        w.setLayout(layout_global)
+        self.setCentralWidget(w)
 
-    # Connexions
+    # CONNEXIONS
     def init_connections(self):
         self.liste_avions.currentItemChanged.connect(self.on_liste_avion_selected)
         self.widget_carte.avion_selectionne_changed.connect(self.on_carte_avion_selected)
         self.widget_carte.avion_updated.connect(self.update_plane_list_item)
 
-    # Musique
+    # MUSIQUE
     def init_music(self):
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
@@ -323,28 +351,26 @@ class MainGameWindow(QMainWindow):
         self.player.setLoops(QMediaPlayer.Infinite)
         self.player.play()
 
-    # Fonctions utilitaires
+    # PAUSE
     def toggle_pause(self):
-        self.paused = not self.paused  # Pause globale
+        self.paused = not self.paused
 
-        # 🔹 Contrôle de la musique
-        if self.paused:
-            self.player.pause()  # mettre en pause le lecteur audio
-        else:
-            self.player.play()  # reprendre la musique
+        # Musique
+        self.player.pause() if self.paused else self.player.play()
 
-        # 🔹 Si on n’est pas en mode atterrissage
-        if not getattr(self, "control_ground_mode", False):
+        # Mode normal
+        if not self.control_ground_mode:
             self.widget_carte.set_paused(self.paused)
             CollisionManager.paused = self.paused
-            if hasattr(self.meteo_manager, 'set_paused'):
+            if hasattr(self.meteo_manager, "set_paused"):
                 self.meteo_manager.set_paused(self.paused)
 
-        # Pause landing view (toujours respectée)
+        # Landing view
         self.landing_view.global_paused = self.paused
 
         self.btn_pause.setText("Reprendre" if self.paused else "Pause")
 
+    # PROGRESS BARS COULEURS
     def update_progress_bar_spectrum(self, bar, value, maximum, spectrum):
         value = max(0, min(value, maximum))
         bar.setMaximum(maximum)
@@ -354,228 +380,218 @@ class MainGameWindow(QMainWindow):
         n = len(spectrum) - 1
         idx = min(int(t * n), n - 1)
         t_local = (t * n) - idx
-        r = int(spectrum[idx][0] + (spectrum[idx + 1][0] - spectrum[idx][0]) * t_local)
-        g = int(spectrum[idx][1] + (spectrum[idx + 1][1] - spectrum[idx][1]) * t_local)
-        b = int(spectrum[idx][2] + (spectrum[idx + 1][2] - spectrum[idx][2]) * t_local)
+
+        r = int(spectrum[idx][0] + (spectrum[idx+1][0] - spectrum[idx][0]) * t_local)
+        g = int(spectrum[idx][1] + (spectrum[idx+1][1] - spectrum[idx][1]) * t_local)
+        b = int(spectrum[idx][2] + (spectrum[idx+1][2] - spectrum[idx][2]) * t_local)
 
         bar.setStyleSheet(f"""
         QProgressBar {{
-            border: 2px solid #444;
-            border-radius: 10px;
-            background: #222;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
+            border:2px solid #444; border-radius:10px;
+            background:#222; text-align:center;
+            font-size:18px; font-weight:bold; color:white;
         }}
         QProgressBar::chunk {{
-            border-radius: 10px;
-            margin: 2px;
-            background-color: rgb({r},{g},{b});
+            border-radius:10px; margin:2px;
+            background-color:rgb({r},{g},{b});
         }}
         """)
 
+    # UPDATE LISTE AVION
     def update_plane_list_item(self, plane):
+        # Si avion supprimé
         if plane not in self.widget_carte.planes:
-            # On empêche temporairement que la suppression provoque une nouvelle sélection
             self.suppress_auto_selection = True
-
-            # 1) Bloquer les signaux de la QListWidget pour éviter callbacks intempestifs
             self.liste_avions.blockSignals(True)
             try:
-                # 2) Désélectionner & forcer l'absence d'item courant
                 self.liste_avions.clearSelection()
-                try:
-                    self.liste_avions.setCurrentItem(None)
-                except Exception:
-                    pass
+                try: self.liste_avions.setCurrentItem(None)
+                except: pass
 
-                # 3) Supprimer l'item correspondant (itération inverse pour sécurité)
-                for i in range(self.liste_avions.count() - 1, -1, -1):
+                for i in range(self.liste_avions.count()-1, -1, -1):
                     item = self.liste_avions.item(i)
                     if item.data(Qt.UserRole) == plane:
                         self.liste_avions.takeItem(i)
                         break
             finally:
-                # 4) Réactiver signaux quoi qu'il arrive
                 self.liste_avions.blockSignals(False)
 
-            # 5) Forcer l'état "aucune sélection" côté carte / UI
+            # Nettoyage UI
             self.widget_carte.selected_plane = None
             self.landing_view.set_selected_plane(None)
             self.label_nom_avion.setText("Sélectionner un avion")
             self.bar_altitude.setValue(0)
             self.bar_vitesse.setValue(0)
             self.bar_fuel.setValue(0)
-            try:
-                self.compass.set_cap(0)
-            except:
-                pass
+            try: self.compass.set_cap(0)
+            except: pass
 
             self.update_stats()
-
-            # 6) Réinitialiser le flag légèrement plus tard (permet au loop Qt de finir les handlers)
             QTimer.singleShot(50, lambda: setattr(self, "suppress_auto_selection", False))
-
             return
 
+        # Mise à jour texte
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole) == plane:
                 item.setText(
-                    f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°")
+                    f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - "
+                    f"Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - "
+                    f"Cap: {plane.avion.cap:.1f}°"
+                )
                 break
         else:
             item = QListWidgetItem(
-                f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - Cap: {plane.avion.cap:.1f}°")
+                f"{plane.avion.nom} - Alt: {plane.avion.altitude} m - "
+                f"Vit: {plane.avion.vitesse} km/h - Fuel: {plane.avion.fuel:.1f}% - "
+                f"Cap: {plane.avion.cap:.1f}°"
+            )
             item.setData(Qt.UserRole, plane)
             self.liste_avions.addItem(item)
 
+        # Si avion sélectionné → update progress bars
         if plane is self.widget_carte.selected_plane:
-            self.update_progress_bar_spectrum(self.bar_altitude, plane.avion.altitude, 12000, [(80,0,120),(120,200,255)])
-            vitesse_spectrum = [(128,0,128),(0,0,255),(0,255,0),(255,255,0),(255,128,0),(255,0,0)]
-            self.update_progress_bar_spectrum(self.bar_vitesse, plane.avion.vitesse, 900, vitesse_spectrum)
-            self.update_progress_bar_spectrum(self.bar_fuel, plane.avion.fuel, 100, [(255,0,0),(255,255,0)])
-            try:
-                self.compass.set_cap(plane.avion.cap)
-            except Exception:
-                pass
+            self.update_progress_bar_spectrum(self.bar_altitude, plane.avion.altitude, 12000,
+                                              [(80,0,120),(120,200,255)])
+            self.update_progress_bar_spectrum(self.bar_vitesse, plane.avion.vitesse, 900,
+                                              [(128,0,128),(0,0,255),(0,255,0),
+                                               (255,255,0),(255,128,0),(255,0,0)])
+            self.update_progress_bar_spectrum(self.bar_fuel, plane.avion.fuel, 100,
+                                              [(255,0,0),(255,255,0)])
+            try: self.compass.set_cap(plane.avion.cap)
+            except: pass
 
         self.update_stats()
 
+    # SELECTION LISTE → AVION
     def on_liste_avion_selected(self, current, previous):
-        # Si on bloque la sélection (suppression en cours) ET qu'il s'agit d'une désélection (current is None),
-        # on ignore cet événement. Si current n'est pas None (l'utilisateur clique), on accepte la sélection.
-        if getattr(self, "suppress_auto_selection", False) and current is None:
+        if self.suppress_auto_selection and current is None:
             return
-        if current:
-            plane = current.data(Qt.UserRole)
-            self.widget_carte.selected_plane = plane
-            self.landing_view.set_selected_plane(plane)
-            self.widget_carte.update()
-            self.update_plane_list_item(plane)
-            self.label_nom_avion.setText(plane.avion.nom)
-            try:
-                self.compass.set_cap(plane.avion.cap)
-            except Exception:
-                pass
+        if not current:
+            return
 
+        plane = current.data(Qt.UserRole)
+        self.widget_carte.selected_plane = plane
+        self.landing_view.set_selected_plane(plane)
+        self.widget_carte.update()
+
+        self.label_nom_avion.setText(plane.avion.nom)
+        try: self.compass.set_cap(plane.avion.cap)
+        except: pass
+
+        self.update_plane_list_item(plane)
+
+    # SELECTION CARTE → AVION
     def on_carte_avion_selected(self, avion):
-        if getattr(self, "suppress_auto_selection", False):
+        if self.suppress_auto_selection:
             return
+
         if avion is None:
             self.label_nom_avion.setText("Sélectionner un avion")
             self.bar_altitude.setValue(0)
             self.bar_vitesse.setValue(0)
             self.bar_fuel.setValue(0)
             self.landing_view.set_selected_plane(None)
-            try:
-                self.compass.set_cap(0)
-            except Exception:
-                pass
+            try: self.compass.set_cap(0)
+            except: pass
             return
+
         self.label_nom_avion.setText(avion.nom)
         self.update_plane_list_item(avion)
         self.landing_view.set_selected_plane(avion)
-        try:
-            self.compass.set_cap(avion.cap)
-        except Exception:
-            pass
+
+        try: self.compass.set_cap(avion.cap)
+        except: pass
+
         for i in range(self.liste_avions.count()):
             item = self.liste_avions.item(i)
             if item.data(Qt.UserRole).avion == avion:
                 self.liste_avions.setCurrentItem(item)
-                return
+                break
 
+    # ATTERRIR
     def on_atterrir_clicked(self):
-        plane = getattr(self.widget_carte, "selected_plane", None)
+        plane = self.widget_carte.selected_plane
         if not plane:
             return
 
-        # --- activer d'abord le plan d'atterrissage ---
+        # Activation piste
         self.landing_view.activate_ground_plane(None)
         self.control_ground_mode = True
+
+        # UI avion au sol
         self.label_nom_avion.setText("Avion au sol")
         self.bar_altitude.setValue(0)
         self.bar_vitesse.setValue(0)
         self.bar_fuel.setValue(0)
-        try:
-            self.compass.set_cap(0)
-        except Exception:
-            pass
+        try: self.compass.set_cap(0)
+        except: pass
 
+        # Suppression sélection
         self.suppress_auto_selection = True
         self.liste_avions.blockSignals(True)
+
         try:
             self.liste_avions.clearSelection()
-            try:
-                self.liste_avions.setCurrentItem(None)
-            except Exception:
-                pass
+            try: self.liste_avions.setCurrentItem(None)
+            except: pass
 
             self.widget_carte.selected_plane = None
-            try:
-                self.widget_carte.remove_plane(plane)
-            except Exception:
+            try: self.widget_carte.remove_plane(plane)
+            except:
                 if plane in self.widget_carte.planes:
                     self.widget_carte.planes.remove(plane)
-                    try:
-                        self.widget_carte.avion_updated.emit(plane)
-                    except Exception:
-                        pass
+                    try: self.widget_carte.avion_updated.emit(plane)
+                    except: pass
 
             self.widget_carte.update()
             QApplication.processEvents()
 
-            try:
-                self.widget_carte.avion_selectionne_changed.emit(None)
-            except Exception:
-                pass
-
+            try: self.widget_carte.avion_selectionne_changed.emit(None)
+            except: pass
         finally:
             self.liste_avions.blockSignals(False)
 
+        # Pause globale
         self.widget_carte.set_paused(True)
         CollisionManager.paused = True
-        if hasattr(self.meteo_manager, 'set_paused'):
+        if hasattr(self.meteo_manager, "set_paused"):
             self.meteo_manager.set_paused(True)
 
-        # Forcer le focus clavier sur la landing view
         self.landing_view.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
         QTimer.singleShot(50, lambda: setattr(self, "suppress_auto_selection", False))
 
         self.landing_view.landing_finished_callback = self.on_landing_finished
 
+    # FIN ATTERRISSAGE
     def on_landing_finished(self):
-        """Reprendre le jeu après que l'avion ait fini l'atterrissage"""
         self.control_ground_mode = False
         self.paused = False
         self.widget_carte.set_paused(False)
         CollisionManager.paused = False
-        if hasattr(self.meteo_manager, 'set_paused'):
+        if hasattr(self.meteo_manager, "set_paused"):
             self.meteo_manager.set_paused(False)
 
+    # METEO
     def mettre_a_jour_message_defilant(self):
         if len(self.meteo_manager.evenements_actifs) > 0:
             self.label_message.setText("ATTENTION : Conditions météo dangereuses détectées !")
         else:
             self.label_message.setText("Rien à signaler")
 
+    # TOUCHES CLAVIER
     def keyPressEvent(self, event):
-        # 🔹 si on est en mode ground plane (atterrissage), gérer la piste
-        if getattr(self, "control_ground_mode", False):
-            if event.key() == Qt.Key_Up:
-                self.landing_view.move_ground_plane(dy=-10)
-            elif event.key() == Qt.Key_Down:
-                self.landing_view.move_ground_plane(dy=10)
-            elif event.key() == Qt.Key_Left:
-                self.landing_view.move_ground_plane(dx=-10)
-            elif event.key() == Qt.Key_Right:
-                self.landing_view.move_ground_plane(dx=10)
+
+        # Mode atterrissage
+        if self.control_ground_mode:
+            if event.key() == Qt.Key_Up: self.landing_view.move_ground_plane(dy=-10)
+            elif event.key() == Qt.Key_Down: self.landing_view.move_ground_plane(dy=10)
+            elif event.key() == Qt.Key_Left: self.landing_view.move_ground_plane(dx=-10)
+            elif event.key() == Qt.Key_Right: self.landing_view.move_ground_plane(dx=10)
             return
 
-        # contrôle avion normal
+        # Mode vol
         plane = self.widget_carte.selected_plane
         if plane is None:
             return
@@ -583,80 +599,86 @@ class MainGameWindow(QMainWindow):
         if event.key() == Qt.Key_Left:
             plane.avion.gauche()
             self.widget_carte._update_velocity_from_cap(plane)
+
         elif event.key() == Qt.Key_Right:
             plane.avion.droite()
             self.widget_carte._update_velocity_from_cap(plane)
+
         elif event.key() == Qt.Key_Up:
             plane.avion.monter()
+
         elif event.key() == Qt.Key_Down:
             plane.avion.descendre()
 
         self.widget_carte.update_plane_position(plane)
         self.update_plane_list_item(plane)
 
+    # STATS
     def update_stats(self):
         nb = len(self.widget_carte.planes)
         self.label_stats.setText(f"Avions présents : {nb}")
 
+    # SCORE
     def update_score(self):
-        if self.paused or getattr(self, "control_ground_mode", False):
-            return  # pas de points pendant pause ou atterrissage
-
+        if self.paused or self.control_ground_mode:
+            return
         self.score += 10
         self.score_label.setText(f"Score : {self.score}")
         self.level_manager.calcul_niveau()
 
+    # Crash avion
     def on_plane_crash(self):
         self.score -= 200
         self.score_label.setText(f"Score : {self.score}")
         if self.score <= 0:
             self.show_game_over()
 
+    # GAME OVER
     def show_game_over(self):
-        # On passe les méthodes existantes comme callbacks
-        game_over_widget = GameOverWidget(
+        game_over = GameOverWidget(
             self,
             restart_callback=self.recommencer_jeu,
             quit_callback=self.retour_menu
         )
-        game_over_widget.setGeometry(self.geometry())
-        game_over_widget.show()
+        game_over.setGeometry(self.geometry())
+        game_over.show()
 
-        # Met le jeu en pause pour qu’il s’arrête
         self.paused = True
         self.widget_carte.set_paused(True)
         CollisionManager.paused = True
-        if hasattr(self.meteo_manager, 'set_paused'):
+        if hasattr(self.meteo_manager, "set_paused"):
             self.meteo_manager.set_paused(True)
 
-    # Fonction pour recommencer le jeu
+    # RECOMMENCER JEU
     def recommencer_jeu(self):
-        # Sauvegarder le player actuel
+
+        # Sauvegarde musique
         player_actuel = self.player
         audio_output = self.audio_output
 
-        # Créer une nouvelle fenêtre de jeu
-        nouvelle_fenetre = MainGameWindow()
+        # Nouvelle fenêtre
+        nouvelle = MainGameWindow()
 
-        # Injecter le player existant pour que la musique continue
-        nouvelle_fenetre.player = player_actuel
-        nouvelle_fenetre.audio_output = audio_output
-        player_actuel.setParent(nouvelle_fenetre)  # éviter qu'il soit détruit
-        player_actuel.play()  # reprendre la musique si elle était en pause
+        # Injection musique
+        nouvelle.player = player_actuel
+        nouvelle.audio_output = audio_output
+        player_actuel.setParent(nouvelle)
+        player_actuel.play()
 
-        # Afficher la nouvelle fenêtre et fermer l'ancienne
-        nouvelle_fenetre.showFullScreen()
+        nouvelle.showFullScreen()
         self.close()
 
+    # RETOUR MENU
     def retour_menu(self):
         if self.player:
             self.player.stop()
         from Accueil import Window
-        self.menu_window = Window()
-        self.menu_window.showFullScreen()
+        menu = Window()
+        menu.showFullScreen()
         self.close()
 
 
+# MAIN
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainGameWindow()
