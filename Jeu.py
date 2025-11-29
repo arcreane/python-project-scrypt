@@ -4,9 +4,9 @@ from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QHBoxLayout, QWidget,
     QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem, QProgressBar,
 )
-from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont, QPalette, QColor
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput, QSoundEffect
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
 # Modules du projet
 from Carte import GameWidget
@@ -56,19 +56,6 @@ class MainGameWindow(QMainWindow):
         self.init_instructions()
         self.init_main_layout()
         self.level_manager = GameLevelManager(self)
-
-        from esthetisme_controles import style_layout_control
-
-        style_layout_control(
-            self.group_controles,
-            self.all_buttons,
-            btn_atterrir=self.btn_atterrir,
-            btn_urgence=self.btn_urgence,
-            btn_attente=self.btn_attente,
-            progress_bars=[self.bar_altitude, self.bar_vitesse, self.bar_fuel],
-            label_nom_avion=self.label_nom_avion,
-            compass=self.compass
-        )
 
         # Timer du score
         self.score_timer = QTimer()
@@ -155,12 +142,6 @@ class MainGameWindow(QMainWindow):
         self.landing_view = LandingView()
         self.landing_view.landing_crash_callback = self.on_plane_crash
         self.landing_view.landing_game_over_callback = self.show_game_over
-        self.landing_view.landing_bonus_callback = self.add_landing_bonus
-
-        # Son du bonus
-        self.son_bonus = QSoundEffect()
-        self.son_bonus.setSource(QUrl.fromLocalFile("Musiques/bonus.wav"))
-        self.son_bonus.setVolume(0.9)
 
         self.widget_carte = GameWidget()
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -337,7 +318,6 @@ class MainGameWindow(QMainWindow):
     def init_music(self):
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
-        self.audio_output.setVolume(0.6)  # 0.0 à 1.0
         self.player.setAudioOutput(self.audio_output)
         self.player.setSource("Musiques/Musique_jeu.mp3")
         self.player.setLoops(QMediaPlayer.Infinite)
@@ -648,12 +628,6 @@ class MainGameWindow(QMainWindow):
         CollisionManager.paused = True
         if hasattr(self.meteo_manager, 'set_paused'):
             self.meteo_manager.set_paused(True)
-
-    def add_landing_bonus(self, points):
-        self.score += points
-        self.score_label.setText(f"Score : {self.score}")
-        if hasattr(self, "son_bonus"):
-            self.son_bonus.play()
 
     # Fonction pour recommencer le jeu
     def recommencer_jeu(self):
