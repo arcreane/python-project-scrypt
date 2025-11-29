@@ -3,8 +3,8 @@ from PySide6.QtWidgets import (
     QApplication, QLabel, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
     QPushButton, QGroupBox, QSizePolicy, QListWidget, QListWidgetItem
 )
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput, QSoundEffect
 
 # Modules du projet
 from Carte import GameWidget
@@ -158,10 +158,17 @@ class MainGameWindow(QMainWindow):
         self.widget_carte.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.meteo_manager = self.widget_carte.meteo_manager
 
+
         # Landing view
         self.landing_view = LandingView()
         self.landing_view.landing_crash_callback = self.on_plane_crash
         self.landing_view.landing_game_over_callback = self.show_game_over
+        self.landing_view.landing_bonus_callback = self.add_landing_bonus
+
+        # Son du bonus
+        self.son_bonus = QSoundEffect()
+        self.son_bonus.setSource(QUrl.fromLocalFile("Musiques/bonus.wav"))
+        self.son_bonus.setVolume(0.9)
 
         # Carte group box
         self.carte_box = QGroupBox()
@@ -346,6 +353,7 @@ class MainGameWindow(QMainWindow):
     def init_music(self):
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
+        self.audio_output.setVolume(0.6)
         self.player.setAudioOutput(self.audio_output)
         self.player.setSource("Musiques/Musique_jeu.mp3")
         self.player.setLoops(QMediaPlayer.Infinite)
@@ -572,6 +580,12 @@ class MainGameWindow(QMainWindow):
         CollisionManager.paused = False
         if hasattr(self.meteo_manager, "set_paused"):
             self.meteo_manager.set_paused(False)
+
+    def add_landing_bonus(self, points):
+        self.score += points
+        self.score_label.setText(f"Score : {self.score}")
+        if hasattr(self, "son_bonus"):
+            self.son_bonus.play()
 
     # METEO
     def mettre_a_jour_message_defilant(self):
