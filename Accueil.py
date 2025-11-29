@@ -1,9 +1,11 @@
-#Accueil.py
+# Accueil.py
 import sys
-from PySide6.QtCore import Qt, QSize, QUrl
+
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
-    QApplication, QPushButton, QVBoxLayout, QWidget, QLabel, QHBoxLayout
+    QApplication, QWidget, QLabel, QPushButton,
+    QVBoxLayout, QHBoxLayout
 )
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
@@ -23,6 +25,17 @@ class Window(QWidget):
         self.background.lower()
 
         # Boutons principaux
+        self._init_buttons()
+
+        # Layout principal
+        self._init_layout()
+
+        # Musique d'accueil
+        self._init_music()
+
+    # Initialisation des boutons
+    def _init_buttons(self):
+        # Bouton "Commencer la partie"
         self.button = QPushButton("Commencer la partie", self)
         self.button.setCursor(Qt.PointingHandCursor)
         self.button.clicked.connect(self.on_button_click)
@@ -31,20 +44,27 @@ class Window(QWidget):
         font.setPointSize(30)
         self.button.setFont(font)
 
+        # Bouton "Infos"
         self.info_button = QPushButton("Infos", self)
         self.info_button.setCursor(Qt.PointingHandCursor)
         self.info_button.clicked.connect(self.show_infos)
         self.info_button.setFixedSize(120, 40)
 
+        # Bouton "Quitter"
         self.quit_button = QPushButton("Quitter", self)
         self.quit_button.setCursor(Qt.PointingHandCursor)
         self.quit_button.clicked.connect(self.close)
         self.quit_button.setFixedSize(120, 40)
 
-        # Layout principal
+        # 🔥 Empêcher navigation clavier
+        for btn in (self.button, self.info_button, self.quit_button):
+            btn.setFocusPolicy(Qt.NoFocus)
+
+    # Initialisation du layout
+    def _init_layout(self):
         layout = QVBoxLayout(self)
 
-        # Layout horizontal pour aligner les boutons à droite
+        # Layout horizontal pour boutons "Infos" et "Quitter" à droite
         top_layout = QHBoxLayout()
         top_layout.addStretch()
         top_layout.addWidget(self.info_button)
@@ -57,7 +77,8 @@ class Window(QWidget):
 
         self.setLayout(layout)
 
-        # Musique d'accueil
+    # Initialisation de la musique d'accueil
+    def _init_music(self):
         self.player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.player.setAudioOutput(self.audio_output)
@@ -68,25 +89,28 @@ class Window(QWidget):
     # Gestion de l'affichage du fond
     def showEvent(self, event):
         self._update_background()
-        return super().showEvent(event)
+        super().showEvent(event)
 
     def resizeEvent(self, event):
         self._update_background()
-        return super().resizeEvent(event)
+        super().resizeEvent(event)
 
     def _update_background(self):
+        """Met à jour l'image de fond pour remplir la fenêtre"""
         if not hasattr(self, "background") or self.background is None:
             return
+
         pixmap = QPixmap("Images/Fond_accueil.png")
-        if not pixmap.isNull():
-            pixmap = pixmap.scaled(
-                self.size(),
-                Qt.AspectRatioMode.KeepAspectRatioByExpanding
-            )
-            self.background.setPixmap(pixmap)
-            self.background.setGeometry(0, 0, self.width(), self.height())
-        else:
+        if pixmap.isNull():
             print("⚠️ Image introuvable")
+            return
+
+        pixmap = pixmap.scaled(
+            self.size(),
+            Qt.AspectRatioMode.KeepAspectRatioByExpanding
+        )
+        self.background.setPixmap(pixmap)
+        self.background.setGeometry(0, 0, self.width(), self.height())
 
     # Actions des boutons
     def on_button_click(self):
