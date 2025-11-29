@@ -1,39 +1,40 @@
-# -*- coding: utf-8 -*-
-"""
-Esthetisme_Control.py
-Style "Animal Crossing" pour le Layout des contrôles (Groupe "Contrôles", boutons, progress bars, labels).
-Conserver les connexions/signaux : ce module ne modifie QUE l'apparence.
-"""
+# Esthetisme_Control.py
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QWidget, QSizePolicy
 from PySide6.QtCore import Qt
 
-def style_layout_control(group_controles: QWidget,
-                         all_buttons: list,
-                         btn_atterrir=None,
-                         btn_urgence=None,
-                         btn_attente=None,
-                         progress_bars: list | None = None,
-                         label_nom_avion=None,
-                         compass=None):
 
-    # Palette générale
+def style_layout_control(
+    group_controles: QWidget,
+    all_buttons: list,
+    btn_atterrir=None,
+    btn_urgence=None,
+    btn_attente=None,
+    progress_bars: list | None = None,
+    label_nom_avion=None,
+    compass=None
+):
+    """
+    Applique un style esthétique aux contrôles du jeu.
+    """
+
+    # Couleurs et palette générale
     pastel_purple = "#C8A2FF"   # boutons génériques
-    pastel_blue = "#CDEEFF"      # hover bouton
-    pastel_pink = "#FFD6E0"      # pressed bouton
+    pastel_blue = "#CDEEFF"     # hover bouton
+    pastel_pink = "#FFD6E0"     # pressed bouton
     cream = "#FFF8EE"
     wood = "#8B5E3C"
     soft_border = "rgba(139,94,60,0.12)"
 
     # Couleurs spécifiques
-    urgence_color = "#FF6B6B"    # rouge/orangé
-    atterrir_color = "#6BCB77"   # vert pastel foncé
-    attente_color = "#4D96FF"    # bleu pastel
+    urgence_color = "#FF6B6B"
+    atterrir_color = "#6BCB77"
+    attente_color = "#4D96FF"
 
-    # --- Style du QGroupBox (groupe Contrôles) ---
+    # Style du QGroupBox (groupe Contrôles)
     group_style = f"""
     QGroupBox {{
-        background: qlineargradient(x1:0,y1:0, x2:1,y2:1,
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 {cream}, stop:1 {pastel_purple});
         border: 2px solid rgba(139,94,60,0.08);
         border-radius: 14px;
@@ -53,12 +54,12 @@ def style_layout_control(group_controles: QWidget,
     except Exception:
         pass
 
-    # --- Police globale ---
+    # Police globale
     default_font = QFont()
     default_font.setPointSize(14)
     default_font.setBold(True)
 
-    # --- Style générique des boutons ---
+    # Style générique des boutons
     button_base = f"""
     QPushButton {{
         background-color: {pastel_purple};
@@ -92,7 +93,7 @@ def style_layout_control(group_controles: QWidget,
         except Exception:
             pass
 
-    # --- Bouton urgence ---
+    # Bouton Urgence
     if btn_urgence:
         urgence_style = f"""
         QPushButton {{
@@ -108,7 +109,7 @@ def style_layout_control(group_controles: QWidget,
         except Exception:
             pass
 
-    # --- Bouton attente ---
+    # Bouton Attente
     if btn_attente:
         attente_style = f"""
         QPushButton {{
@@ -124,7 +125,7 @@ def style_layout_control(group_controles: QWidget,
         except Exception:
             pass
 
-    # --- Bouton atterrir ---
+    # Bouton Atterrir
     if btn_atterrir:
         atterrir_style = f"""
         QPushButton {{
@@ -140,7 +141,7 @@ def style_layout_control(group_controles: QWidget,
         except Exception:
             pass
 
-    # --- Progress bars ---
+    # Progress Bars
     if progress_bars:
         for pb in progress_bars:
             try:
@@ -157,8 +158,10 @@ def style_layout_control(group_controles: QWidget,
                 QProgressBar::chunk {{
                     border-radius: 8px;
                     margin: 2px;
-                    background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                        stop:0 #D4B3FF, stop:0.6 #FFEE88, stop:1 #FFB88A);
+                    background: qlineargradient(
+                        x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #D4B3FF, stop:0.6 #FFEE88, stop:1 #FFB88A
+                    );
                 }}
                 """
                 pb.setStyleSheet(prog_style)
@@ -172,18 +175,14 @@ def style_layout_control(group_controles: QWidget,
             except Exception:
                 pass
 
-    # --- Label nom avion ---
+    # Label Nom Avion
     if label_nom_avion:
         try:
-            # Largeur minimale pour éviter que le layout bouge
             label_nom_avion.setMinimumWidth(label_nom_avion.sizeHint().width())
-            # S'adapte horizontalement à l'espace disponible
             label_nom_avion.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            # Texte tronqué si trop long
             label_nom_avion.setWordWrap(False)
             label_nom_avion.setTextInteractionFlags(Qt.TextSelectableByMouse)
             label_nom_avion.setElideMode(Qt.ElideRight)
-            # Style
             label_nom_avion.setStyleSheet(f"""
                 QLabel {{
                     color: {wood};
@@ -197,14 +196,17 @@ def style_layout_control(group_controles: QWidget,
         except Exception:
             pass
 
-    # --- Compass ---
+    # Compass
     if compass:
         try:
             compass.setStyleSheet(f"""
                 QWidget {{
                     border: 2px solid rgba(139,94,60,0.06);
                     border-radius: 10px;
-                    background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 {pastel_blue}, stop:1 {cream});
+                    background: qlineargradient(
+                        x1:0, y1:0, x2:1, y2:1,
+                        stop:0 {pastel_blue}, stop:1 {cream}
+                    );
                 }}
             """)
         except Exception:
