@@ -56,7 +56,7 @@ class Window(QWidget):
         self.quit_button.clicked.connect(self.close)
         self.quit_button.setFixedSize(120, 40)
 
-        # 🔥 Empêcher navigation clavier
+        # Empêcher navigation clavier
         for btn in (self.button, self.info_button, self.quit_button):
             btn.setFocusPolicy(Qt.NoFocus)
 
