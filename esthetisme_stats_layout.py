@@ -1,4 +1,4 @@
-# style_layout_stats.py
+# esthetisme_stats_layout.py
 from PySide6.QtGui import QFont
 
 def style_layout_stats(label_stats, score_label, niveau_label, group_avions):
@@ -7,7 +7,7 @@ def style_layout_stats(label_stats, score_label, niveau_label, group_avions):
     Aucun changement de logique : uniquement visuel.
     """
 
-    # ---------- Couleurs Animal Crossing ----------
+    # Couleurs Animal Crossing
     bg_panel = "#FFF9E8"      # beige crème
     border_color = "#C8B28A"  # marron clair
     title_color = "#8B6F47"   # bois
@@ -15,7 +15,7 @@ def style_layout_stats(label_stats, score_label, niveau_label, group_avions):
     pastel_blue = "#A3D1FF"
     pastel_green = "#A7D9A9"
 
-    # ---------- Style du label "Stats" ----------
+    # Label "Stats"
     font_stats = QFont(label_stats.font())
     font_stats.setPointSize(26)
     font_stats.setBold(True)
@@ -31,12 +31,11 @@ def style_layout_stats(label_stats, score_label, niveau_label, group_avions):
         }}
     """)
 
-    # ---------- Style du label score ----------
+    # Label "Score"
     font_score = QFont(score_label.font())
     font_score.setPointSize(22)
     font_score.setBold(True)
     score_label.setFont(font_score)
-
     score_label.setStyleSheet(f"""
         QLabel {{
             background-color: {pastel_green};
@@ -47,12 +46,11 @@ def style_layout_stats(label_stats, score_label, niveau_label, group_avions):
         }}
     """)
 
-    # ---------- Style du label niveau ----------
+    # Label "Niveau"
     font_niveau = QFont(niveau_label.font())
     font_niveau.setPointSize(22)
     font_niveau.setBold(True)
     niveau_label.setFont(font_niveau)
-
     niveau_label.setStyleSheet(f"""
         QLabel {{
             background-color: {pastel_blue};
@@ -63,7 +61,7 @@ def style_layout_stats(label_stats, score_label, niveau_label, group_avions):
         }}
     """)
 
-    # ---------- Style du groupe avions ----------
+    # Groupe avions
     group_avions.setStyleSheet(f"""
         QGroupBox {{
             background-color: {bg_panel};
