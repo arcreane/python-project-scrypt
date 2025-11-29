@@ -673,8 +673,8 @@ class MainGameWindow(QMainWindow):
         if self.player:
             self.player.stop()
         from Accueil import Window
-        menu = Window()
-        menu.showFullScreen()
+        self.menu = Window()
+        self.menu.showFullScreen()
         self.close()
 
 
