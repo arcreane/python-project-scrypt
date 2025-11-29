@@ -37,7 +37,11 @@ class LandingView(QLabel):
 
         self.son_plouf = QSoundEffect()
         self.son_plouf.setSource(QUrl.fromLocalFile("Musiques/plouf.wav"))
-        self.son_plouf.setVolume(0.9)
+        self.son_plouf.setVolume(0.6)
+
+        self.son_gameover = QSoundEffect()
+        self.son_gameover.setSource(QUrl.fromLocalFile("gameover.wav"))
+        self.son_gameover.setVolume(0.6)
 
     def set_selected_plane(self, plane):
         if self.locked or self.ground_plane_active:
@@ -125,48 +129,54 @@ class LandingView(QLabel):
         if not self.ground_plane_active or self.global_paused:
             return
 
+        # Déplacer l'avion
         self.ground_x += dx
         self.ground_y += dy
 
+        # Limites pour rester dans l'image
         max_x = self.pixmap_avion.width() - int(self.plane_overlay.width() * self.ground_scale)
         max_y = self.pixmap_avion.height() - int(self.plane_overlay.height() * self.ground_scale)
 
         self.ground_x = max(0, min(self.ground_x, max_x))
         self.ground_y = max(0, min(self.ground_y, max_y))
 
+        # Mettre à jour l'affichage
         self.update_ground_plane()
 
-        # Définition de la zone piste selon tes pourcentages
+        # Définition de la zone piste
         piste_top = int(self.pixmap_avion.height() * 0.58)
-        piste_bottom = int(self.pixmap_avion.height() * 0.79)  # 58% + 21%
+        piste_bottom = int(self.pixmap_avion.height() * 0.79)
         piste_left_top = int(self.pixmap_avion.width() * 0.26)
         piste_left_bottom = int(self.pixmap_avion.width() * 0.235)
         piste_right_top = int(self.pixmap_avion.width() * 0.12)
         piste_right_bottom = int(self.pixmap_avion.width() * 0.06)
 
-        # Vérification si l’avion est **dans la piste**
         overlay_height = int(self.plane_overlay.height() * self.ground_scale)
         overlay_width = int(self.plane_overlay.width() * self.ground_scale)
 
-        # Calcul simple de collision / zone
+        # Vérifier si l’avion est dans la piste
         if (piste_top <= self.ground_y <= piste_bottom - overlay_height and
                 piste_left_bottom <= self.ground_x <= self.pixmap_avion.width() - piste_right_bottom - overlay_width):
-            # Atterrissage réussi
             self.finish_landing(success=True)
             return
 
-        # Si on dépasse la zone autorisée → Game Over
+        # Si on dépasse la zone autorisée → appliquer malus
         landing_limit_y = self.pixmap_avion.height() * (1 - 0.2)  # 20% bas
         if self.ground_y + overlay_height > landing_limit_y:
             # Jouer le son plouf
             if hasattr(self, "son_plouf") and self.son_plouf:
                 self.son_plouf.play()
-            # Malus
+
+            # Appliquer le malus et récupérer le score mis à jour
+            new_score = None
             if hasattr(self, "landing_malus_callback") and callable(self.landing_malus_callback):
-                self.landing_malus_callback(-200)
-            # Game Over
-            if hasattr(self, "landing_game_over_callback") and callable(self.landing_game_over_callback):
-                self.landing_game_over_callback()
+                new_score = self.landing_malus_callback(-200)
+
+            # Déclencher Game Over seulement si le score <= 0
+            if new_score is not None and new_score <= 0:
+                if hasattr(self, "landing_game_over_callback") and callable(self.landing_game_over_callback):
+                    self.landing_game_over_callback()
+
             self.finish_landing(success=False)
             return
 
@@ -175,7 +185,9 @@ class LandingView(QLabel):
         self.locked = False
 
         if success:
-            # L'avion a atterri correctement → on le retire
+            # L'avion a atterri correctement → bonus de points
+            if hasattr(self, "landing_bonus_callback") and callable(self.landing_bonus_callback):
+                self.landing_bonus_callback(100)  # Bonus de 100 points
             if hasattr(self, "landing_finished_callback") and callable(self.landing_finished_callback):
                 self.landing_finished_callback()  # callback pour reprendre le jeu
             self.current_pixmap = self.pixmap_attente
