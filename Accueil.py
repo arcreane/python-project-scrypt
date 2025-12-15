@@ -1,6 +1,7 @@
 # Accueil.py
 import sys
 
+
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
